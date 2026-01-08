@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isager (2023): Causal Detectives Slide-Set</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://unpkg.com/simple-statistics@7.8.0/dist/simple-statistics.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1100px; margin: 0 auto; padding: 10px; background-color: #ecf0f1; color: #2c3e50; }
+        .container { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); min-height: 750px; position: relative; }
+        
+        /* Navigation Bar (Top) */
+        .progress-bar { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #bdc3c7; padding-bottom: 10px; overflow-x: auto;}
+        .dot { 
+            height: 12px; flex-grow: 1; background-color: #ecf0f1; border-radius: 6px; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; font-size: 10px; color: #7f8c8d; font-weight: bold;
+        }
+        .dot.active { background-color: #3498db; color: white; }
+        .dot:hover { background-color: #bdc3c7; }
+
+        /* Slides */
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Slide Content Layouts */
+        .split-layout { display: flex; gap: 30px; }
+        .left-panel { flex: 2; }
+        .right-panel { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 5px solid #3498db; }
+
+        /* Diagrams */
+        .diagram-container { 
+            text-align: center; background: #fff; padding: 10px; margin-bottom: 10px; 
+            border-radius: 8px; border: 1px dashed #bdc3c7; display: flex; justify-content: center; align-items: center; gap: 30px;
+        }
+        .diagram-label { font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 5px; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Text & Buttons */
+        h1 { margin-top: 0; color: #2c3e50; }
+        h2 { margin-top: 0; font-size: 1.5em; color: #2980b9; margin-bottom: 15px; }
+        p { line-height: 1.5; font-size: 0.95em; margin-bottom: 10px; }
+        ul { padding-left: 20px; margin-bottom: 15px; font-size: 0.95em; line-height: 1.5; }
+        
+        .stat-box { font-weight: bold; color: #e74c3c; margin-bottom: 15px; font-size: 1.2em; text-align: center; background: white; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
+        .insight-box { margin-top: auto; padding: 15px; background-color: #fff8e1; border-left: 5px solid #f1c40f; border-radius: 4px; display: none; font-size: 0.9em; }
+        
+        button.action-btn { 
+            width: 100%; padding: 12px; font-size: 14px; cursor: pointer; background-color: #3498db; color: white; 
+            border: none; border-radius: 6px; margin-bottom: 10px; font-weight: bold; transition: 0.2s;
+        }
+        button.action-btn:hover { background-color: #2980b9; }
+        button.reset-btn { background-color: #95a5a6; }
+        button.reset-btn:hover { background-color: #7f8c8d; }
+
+        /* Navigation Buttons (Bottom) */
+        .nav-footer { 
+            position: absolute; bottom: 20px; left: 30px; right: 30px; 
+            display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 20px;
+        }
+        .nav-arrow { background-color: #2c3e50; color: white; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-size: 16px; }
+        .nav-arrow:hover { background-color: #34495e; }
+        .nav-arrow:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        /* Tutorial Graphic CSS */
+        .tutorial-grid {
+            display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: auto auto; gap: 20px;
+            border: 2px dashed #bdc3c7; padding: 20px; border-radius: 10px; background: #fdfdfd; position: relative;
+        }
+        .tut-item { border: 2px solid #3498db; padding: 20px; border-radius: 8px; text-align: center; background: white; position: relative; }
+        .tut-badge { 
+            position: absolute; top: -15px; left: -15px; width: 30px; height: 30px; background: #e74c3c; 
+            color: white; border-radius: 50%; font-weight: bold; display: flex; align-items: center; justify-content: center; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="progress-bar">
+        <div class="dot active" onclick="goToSlide(0)">Start</div>
+        <div class="dot" onclick="goToSlide(1)">1. Direction</div>
+        <div class="dot" onclick="goToSlide(2)">2. Confounding</div>
+        <div class="dot" onclick="goToSlide(3)">3. Selection</div>
+        <div class="dot" onclick="goToSlide(4)">4. Feedback</div>
+        <div class="dot" onclick="goToSlide(5)">5. Real World</div>
+        <div class="dot" onclick="goToSlide(6)">Summary</div>
+    </div>
+
+    <div id="slide-0" class="slide active">
+        <h1 style="text-align: center;">How to use this tool</h1>
+        <p style="text-align: center; max-width: 800px; margin: 0 auto 30px auto;">
+            This interactive tool visualizes the core arguments from <strong>Isager (2023)</strong>. 
+            It demonstrates why "Correlation does not equal a direct causal connection" by letting you explore 
+            competing causal models for the same data.
+        </p>
+        
+        <p style="text-align: center; color: #7f8c8d; font-style: italic; margin-bottom: 25px;">
+            (Note: All data and correlations in this tool are simulated/made up for educational purposes)
+        </p>
+
+        <div class="tutorial-grid">
+            <div class="tut-item" style="grid-column: 1 / 3;">
+                <div class="tut-badge">1</div>
+                <strong>The Causal Diagram</strong><br>
+                Look here first. This visualizes the theoretical model (e.g., A &rarr; B) being tested.
+            </div>
+            
+            <div class="tut-item" style="height: 200px; display: flex; align-items: center; justify-content: center; background: #ecf0f1;">
+                <div class="tut-badge">2</div>
+                <strong>The Correlation Chart</strong><br>
+                This shows the observable data (Scatterplot).<br>
+                Look for the <span style="color:#e74c3c">Red Line</span> (The observed correlation).
+            </div>
+
+            <div class="tut-item" style="background: #eaf2f8;">
+                <div class="tut-badge">3</div>
+                <strong>The Controls</strong><br>
+                Use these buttons to <em>Intervene</em>, <em>Reveal Hidden Data</em>, or <em>Control for Variables</em>.
+                <br><br>
+                <em>"If you cannot imagine the truth, you cannot discover it."</em>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 20px; font-style: italic;">Click "Next" to begin the investigation.</p>
+    </div>
+
+    <div id="slide-1" class="slide">
+        <div class="split-layout">
+            <div class="left-panel">
+                <div class="diagram-container">
+                    <div>
+                        <span class="diagram-label">Model 1: Direct</span>
+                        <svg width="120" height="50">
+                            <circle cx="20" cy="25" r="15" fill="white" stroke="#333" stroke-width="2"/>
+                            <text x="20" y="30" text-anchor="middle" font-size="10">Ex</text>
+                            <line x1="40" y1="25" x2="75" y2="25" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <circle cx="95" cy="25" r="15" fill="white" stroke="#333" stroke-width="2"/>
+                            <text x="95" y="30" text-anchor="middle" font-size="10">Mood</text>
+                        </svg>
+                    </div>
+                    <div style="font-size: 20px; color: #888;">vs</div>
+                    <div>
+                        <span class="diagram-label">Model 2: Reverse</span>
+                        <svg width="120" height="50">
+                            <circle cx="20" cy="25" r="15" fill="white" stroke="#333" stroke-width="2"/>
+                            <text x="20" y="30" text-anchor="middle" font-size="10">Ex</text>
+                            <line x1="75" y1="25" x2="40" y2="25" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <circle cx="95" cy="25" r="15" fill="white" stroke="#333" stroke-width="2"/>
+                            <text x="95" y="30" text-anchor="middle" font-size="10">Mood</text>
+                        </svg>
+                    </div>
+                </div>
+                <div id="chartDirection" style="width:100%; height:400px;"></div>
+            </div>
+            <div class="right-panel">
+                <h2>The Directionality Problem</h2>
+                <div id="statDirect" class="stat-box">Correlation r = 0.85</div>
+                <p>The scatterplot shows a clear pattern. But does this pattern truly represent the causal model we have in mind?</p>
+                <p>Does Exercise cause Mood? Or does Mood cause Exercise? <strong>Swap the axes</strong> to see if the pattern reveals the truth.</p>
+                <button class="action-btn" onclick="Directionality.viewA()">View: Ex &rarr; Mood</button>
+                <button class="action-btn" onclick="Directionality.viewB()">View: Mood &rarr; Ex</button>
+                <div class="insight-box" style="display:block">
+                    <strong>Result:</strong> The pattern is identical. You cannot <strong>infer</strong> causality from this chart alone; you would need a longitudinal design or <strong>preferably an experiment</strong>.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="slide-2" class="slide">
+        <div class="split-layout">
+            <div class="left-panel">
+                <div class="diagram-container">
+                    <div>
+                        <span class="diagram-label">Model 4: Confounding (Common Cause)</span>
+                        <svg width="200" height="80">
+                            <circle cx="100" cy="15" r="15" fill="#e74c3c" stroke="#333" stroke-width="2"/>
+                            <text x="100" y="20" text-anchor="middle" font-size="9" fill="white">Stress</text>
+                            <line x1="90" y1="25" x2="40" y2="55" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <line x1="110" y1="25" x2="160" y2="55" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <circle cx="30" cy="65" r="15" fill="white" stroke="#333" stroke-width="2"/>
+                            <text x="30" y="70" text-anchor="middle" font-size="10">Ex</text>
+                            <circle cx="170" cy="65" r="15" fill="white" stroke="#333" stroke-width="2"/>
+                            <text x="170" y="70" text-anchor="middle" font-size="10">Mood</text>
+                        </svg>
+                    </div>
+                </div>
+                <div id="chartConfounding" style="width:100%; height:400px;"></div>
+            </div>
+            <div class="right-panel">
+                <h2>What is Confounding?</h2>
+                <div id="statConfounding" class="stat-box">Observed r = 0.82</div>
+                
+                <p>To "confound" means to mix up. Isager (2023) describes this as a <strong>Lurking Third Variable</strong>.</p>
+                
+                <ul>
+                    <li><strong>The Illusion:</strong> It looks like Exercise causes <strong>Mood</strong> because they move together.</li>
+                    <li><strong>Other variables could be causal factors.</strong> For example, "Stress at work": High stress causes <em>both</em> low exercise and bad mood.</li>
+                </ul>
+
+                <button class="action-btn" onclick="Confounding.reveal()">Reveal Confounder (Stress)</button>
+                <button class="action-btn reset-btn" onclick="Confounding.reset()">Reset</button>
+
+                <div id="msgConfounding" class="insight-box">
+                    <strong>Why we "Control" for Variables:</strong><br>
+                    Think of Statistical Control as <strong>"Comparing Like with Like."</strong><br><br>
+                    Comparing a stressed person to a relaxed person is like comparing <strong>apples and oranges</strong>. We must compare a stressed person <em>only</em> to other stressed people.
+                    <br><br>
+                    When we do that (look within the colors), the correlation is zero (r=0.00). The "effect" was just the difference <em>between</em> the groups.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="slide-3" class="slide">
+        <div class="split-layout">
+            <div class="left-panel">
+                <div class="diagram-container">
+                    <div>
+                        <span class="diagram-label">Model 5: Selection Bias (Collider)</span>
+                        <svg width="200" height="80">
+                            <circle cx="30" cy="20" r="15" fill="white" stroke="#333" stroke-width="2"/>
+                            <text x="30" y="25" text-anchor="middle" font-size="10">Ex</text>
+                            <circle cx="170" cy="20" r="15" fill="white" stroke="#333" stroke-width="2"/>
+                            <text x="170" y="25" text-anchor="middle" font-size="10">Mood</text>
+                            <line x1="40" y1="30" x2="90" y2="60" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <line x1="160" y1="30" x2="110" y2="60" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <rect x="80" y="60" width="40" height="20" fill="#95a5a6" stroke="#333" stroke-width="2"/>
+                            <text x="100" y="75" text-anchor="middle" font-size="8" fill="white">Survey</text>
+                        </svg>
+                    </div>
+                </div>
+                <div id="chartSelection" style="width:100%; height:400px;"></div>
+            </div>
+            <div class="right-panel">
+                <h2>Selection Bias</h2>
+                <div id="statSelection" class="stat-box">Sample r = 0.65</div>
+                <p>Did everyone answer the survey? Or did the "Unhappy Gym Rats" (High Exercise, Bad Mood) refuse to participate?</p>
+                <button class="action-btn" onclick="Selection.reveal()">Reveal Missing Data</button>
+                <button class="action-btn reset-btn" onclick="Selection.reset()">Reset</button>
+                <div id="msgSelection" class="insight-box">
+                    <strong>Insight:</strong> The correlation only exists because we are missing the grey dots. In the full population, there is no correlation (r=0.00).
+                </div>
+                <p style="font-size:0.9em; color:#7f8c8d; margin-top:20px; font-style: italic; text-align: center;">(This is also called Conditioning on a Collider)</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="slide-4" class="slide">
+        <div class="split-layout">
+            <div class="left-panel" style="display:flex; justify-content:center; align-items:center; background:#fff; border:1px dashed #ccc; border-radius:10px; height:450px;">
+                <svg width="400" height="200">
+                    <circle cx="80" cy="100" r="40" fill="#3498db" stroke="#2c3e50" stroke-width="3"/>
+                    <text x="80" y="105" text-anchor="middle" font-family="sans-serif" font-weight="bold" fill="white">Exercise</text>
+                    
+                    <circle cx="320" cy="100" r="40" fill="#3498db" stroke="#2c3e50" stroke-width="3"/>
+                    <text x="320" y="105" text-anchor="middle" font-family="sans-serif" font-weight="bold" fill="white">Mood</text>
+
+                    <path d="M 110 80 Q 200 20 290 80" stroke="#e74c3c" stroke-width="4" fill="none" marker-end="url(#arrowheadRed)"/>
+                    <text x="200" y="50" text-anchor="middle" font-size="14" fill="#e74c3c" font-weight="bold">Boosts</text>
+
+                    <path d="M 290 120 Q 200 180 110 120" stroke="#e74c3c" stroke-width="4" fill="none" marker-end="url(#arrowheadRed)"/>
+                    <text x="200" y="160" text-anchor="middle" font-size="14" fill="#e74c3c" font-weight="bold">Boosts</text>
+                </svg>
+            </div>
+            <div class="right-panel">
+                <h2>Feedback Loop</h2>
+                <div class="stat-box" style="color:#333;">Model 3: Bidirectional</div>
+                <p>Isager mentions that "feedback relations often lead to complex relations".</p>
+                <p>
+                    Rather than a simple one-way street, the variables <strong>feed each other</strong>.
+                </p>
+                <ul>
+                    <li>Exercise releases endorphins &rarr; Better Mood.</li>
+                    <li>Better Mood increases motivation &rarr; More Exercise.</li>
+                </ul>
+                <p>
+                    This creates a <strong>self-reinforcing cycle</strong>. In a scatterplot, this would look like a massive correlation, but calculating a single "causal effect" is mathematically difficult because cause and effect are <strong>intertwined</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="slide-5" class="slide">
+        <div class="split-layout">
+            <div class="left-panel" style="display:flex; justify-content:center; align-items:center; background:#f9f9f9; border:1px solid #ddd; border-radius:10px; height:450px;">
+                <svg width="500" height="400">
+                     <circle cx="250" cy="50" r="30" fill="#e74c3c" stroke="#333" stroke-width="2"/>
+                     <text x="250" y="55" text-anchor="middle" font-weight="bold" fill="white">Stress</text>
+                     <text x="290" y="55" font-size="12" font-weight="bold" fill="#c0392b"> &larr; Confounder</text>
+                     
+                     <circle cx="100" cy="200" r="35" fill="white" stroke="#333" stroke-width="3"/>
+                     <text x="100" y="205" text-anchor="middle" font-weight="bold">Exercise</text>
+
+                     <circle cx="400" cy="200" r="35" fill="white" stroke="#333" stroke-width="3"/>
+                     <text x="400" y="205" text-anchor="middle" font-weight="bold">Mood</text>
+
+                     <rect x="200" y="320" width="100" height="40" fill="#95a5a6" stroke="#333" stroke-width="2"/>
+                     <text x="250" y="340" text-anchor="middle" font-weight="bold" font-size="11" fill="white">Selection</text>
+                     <text x="250" y="352" text-anchor="middle" font-weight="bold" font-size="11" fill="white">Bias</text>
+                     <text x="310" y="345" font-size="12" font-weight="bold" fill="#7f8c8d"> &larr; Selection Bias</text>
+
+                     <line x1="230" y1="70" x2="120" y2="170" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+                     <line x1="270" y1="70" x2="380" y2="170" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+
+                     <path d="M 135 190 Q 250 150 365 190" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                     <path d="M 365 210 Q 250 250 135 210" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                     
+                     <text x="250" y="200" text-anchor="middle" font-size="11" font-weight="bold">Direct or Reverse</text>
+                     <text x="250" y="215" text-anchor="middle" font-size="10" font-style="italic">(or Feedback Loop)</text>
+
+                     <line x1="120" y1="230" x2="200" y2="320" stroke="#95a5a6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+                     <line x1="380" y1="230" x2="300" y2="320" stroke="#95a5a6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+                </svg>
+            </div>
+            <div class="right-panel">
+                <h2>The Real World is Messy</h2>
+                <div class="stat-box" style="color:#2c3e50; font-size:0.9em;">Confounding + Selection + Reverse Causality</div>
+                <p>Isager (2023) concludes that we must "consider all the causal relations."</p>
+                <p>
+                    In the real world, you don't just get one problem. You often get <strong>all of them at once</strong>.
+                </p>
+                <p>
+                    As the diagram shows:
+                </p>
+                <ul>
+                    <li><span style="color:#e74c3c">Red Dashed:</span> Third variables causing both.</li>
+                    <li><span style="color:#95a5a6">Grey Dashed:</span> Selection bias distorting the sample.</li>
+                    <li><strong>Black Solid:</strong> Direct, Reverse, or Feedback effects.</li>
+                </ul>
+                <div class="insight-box" style="display:block;">
+                    <strong>Conclusion:</strong> A simple correlation (r=0.85) could be the result of this entire tangled web.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="slide-6" class="slide">
+        <h1 style="text-align: center;">The Takeaway</h1>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 40px; margin-top: 40px;">
+            <div style="width: 50%; text-align: center;">
+                <div id="chartSummary" style="width:100%; height:400px;"></div>
+            </div>
+            <div style="width: 40%;">
+                <h2 style="color: #e74c3c;">Correlation &ne; Causation</h2>
+                <p style="font-size: 1.1em; line-height: 1.8;">
+                    Whenever you see a correlation like the one on the left—where <strong>Variable X</strong> and <strong>Variable Y</strong> seem to move together—you must pause.
+                </p>
+                <div style="background: #eaf2f8; padding: 20px; border-left: 5px solid #2980b9; border-radius: 4px;">
+                    <strong>Ask yourself Isager's Question:</strong><br><br>
+                    "Consider all the causal relations."<br>
+                    Could it be confounding? Selection bias? Reverse causality? Or a feedback loop?
+                </div>
+                <p style="margin-top: 20px; font-weight:bold;">
+                    One needs an experiment, longitudinal data, or more complex statistical analysis to shed further light on the question.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-footer">
+        <button id="btnPrev" class="nav-arrow" onclick="changeSlide(-1)">&#8592; Previous</button>
+        <span id="slideCounter" style="font-weight: bold; color: #7f8c8d;">Introduction</span>
+        <button id="btnNext" class="nav-arrow" onclick="changeSlide(1)">Next &#8594;</button>
+    </div>
+
+    <svg style="display: none;">
+        <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+            </marker>
+            <marker id="arrowheadRed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c" />
+            </marker>
+        </defs>
+    </svg>
+
+</div>
+
+<script>
+    // --- SLIDE NAVIGATION LOGIC ---
+    let currentSlide = 0;
+    const totalSlides = 7;
+    const slideNames = ["Introduction", "1. Directionality", "2. Confounding", "3. Selection Bias", "4. Feedback Loop", "5. Real World", "Summary"];
+
+    function updateNav() {
+        // Toggle Slides
+        document.querySelectorAll('.slide').forEach((s, index) => {
+            s.classList.remove('active');
+            if(index === currentSlide) {
+                s.classList.add('active');
+                // Trigger Plotly resize/redraw when slide becomes visible
+                if(index === 1) Directionality.viewA();
+                if(index === 2) Confounding.reset();
+                if(index === 3) Selection.reset();
+                if(index === 6) Summary.init();
+            }
+        });
+
+        // Toggle Progress Dots
+        document.querySelectorAll('.dot').forEach((d, index) => {
+            d.classList.toggle('active', index === currentSlide);
+        });
+
+        // Update Buttons
+        document.getElementById('btnPrev').disabled = (currentSlide === 0);
+        document.getElementById('btnNext').disabled = (currentSlide === totalSlides - 1);
+        
+        // Update Label
+        document.getElementById('slideCounter').innerText = slideNames[currentSlide];
+    }
+
+    function changeSlide(dir) {
+        currentSlide += dir;
+        updateNav();
+    }
+
+    function goToSlide(index) {
+        currentSlide = index;
+        updateNav();
+    }
+
+    // --- GLOBAL SETTINGS ---
+    const plotlyConfig = { displayModeBar: false, responsive: true };
+
+    // --- UTILITIES ---
+    function randNorm(mean, sd) {
+        let u = 0, v = 0;
+        while(u === 0) u = Math.random();
+        while(v === 0) v = Math.random();
+        return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v ) * sd + mean;
+    }
+    
+    function calculateR(x, y) {
+        if(x.length !== y.length || x.length === 0) return 0;
+        return ss.sampleCorrelation(x, y).toFixed(2);
+    }
+
+    function getTrend(x, y) {
+        if(x.length < 2) return {x:[], y:[]};
+        const lr = ss.linearRegression(x.map((xi, i) => [xi, y[i]]));
+        const line = ss.linearRegressionLine(lr);
+        const minX = Math.min(...x);
+        const maxX = Math.max(...x);
+        return { x: [minX, maxX], y: [line(minX), line(maxX)] };
+    }
+
+    // --- MODELS ---
+
+    // 1. DIRECTIONALITY
+    const Directionality = {
+        data: [],
+        init: function() {
+            this.data = [];
+            for(let i=0; i<60; i++) {
+                let v = randNorm(5, 2);
+                let e = v + randNorm(0, 1.5);
+                let m = v * 0.8 + randNorm(1, 1.5);
+                this.data.push({ex: e, mo: m});
+            }
+        },
+        viewA: function() {
+            if(this.data.length === 0) this.init();
+            let x = this.data.map(d => d.ex); let y = this.data.map(d => d.mo);
+            let r = calculateR(x, y);
+            document.getElementById('statDirect').innerHTML = `Correlation r = ${r}`;
+            this.plot(x, y, "Hypothesis A: Exercise (X) -> Mood (Y)", "Exercise", "Mood");
+        },
+        viewB: function() {
+            if(this.data.length === 0) this.init();
+            let x = this.data.map(d => d.mo); let y = this.data.map(d => d.ex);
+            let r = calculateR(x, y);
+            document.getElementById('statDirect').innerHTML = `Correlation r = ${r}`;
+            this.plot(x, y, "Hypothesis B: Mood (X) -> Exercise (Y)", "Mood", "Exercise");
+        },
+        plot: function(x, y, title, xTitle, yTitle) {
+            const tr = getTrend(x, y);
+            Plotly.newPlot('chartDirection', [
+                { x: x, y: y, mode:'markers', marker:{color:'#34495e', size:10}, name:'Data' },
+                { x: tr.x, y: tr.y, mode:'lines', line:{color:'#e74c3c'}, name:'Trend' }
+            ], { title: title, xaxis:{title: xTitle}, yaxis:{title: yTitle} }, plotlyConfig);
+        }
+    };
+
+    // 2. CONFOUNDING
+    const Confounding = {
+        xH:[], yH:[], xL:[], yL:[],
+        init: function() {
+            this.xH=[]; this.yH=[]; this.xL=[]; this.yL=[];
+            for(let i=0; i<50; i++){ this.xH.push(randNorm(3,1.5)); this.yH.push(randNorm(3,1.5)); }
+            for(let i=0; i<50; i++){ this.xL.push(randNorm(8,1.5)); this.yL.push(randNorm(8,1.5)); }
+        },
+        reset: function() {
+            if(this.xH.length === 0) this.init();
+            let allX = this.xH.concat(this.xL);
+            let allY = this.yH.concat(this.yL);
+            let r = calculateR(allX, allY);
+            document.getElementById('statConfounding').innerHTML = `Observed r = ${r}`;
+            document.getElementById('msgConfounding').style.display = 'none';
+            let tr = getTrend(allX, allY);
+            Plotly.newPlot('chartConfounding', [
+                { x: allX, y: allY, mode:'markers', marker:{color:'#34495e', size:10}, name:'Data' },
+                { x: tr.x, y: tr.y, mode:'lines', line:{color:'#e74c3c'}, name:'Global Trend' }
+            ], { title: 'Raw Data', xaxis:{title:'Exercise'}, yaxis:{title:'Mood'} }, plotlyConfig);
+        },
+        reveal: function() {
+            // Hardcode 0.00 for teaching clarity
+            document.getElementById('statConfounding').innerHTML = `Subgroup r = 0.00`;
+            document.getElementById('msgConfounding').style.display = 'block';
+            Plotly.newPlot('chartConfounding', [
+                { x: this.xH, y: this.yH, mode:'markers', marker:{color:'#e74c3c'}, name:'High Stress' },
+                { x: this.xL, y: this.yL, mode:'markers', marker:{color:'#2ecc71'}, name:'Low Stress' },
+                { x: [Math.min(...this.xH), Math.max(...this.xH)], y: [3, 3], mode:'lines', line:{dash:'dash', color:'#e74c3c'}, showlegend:false },
+                { x: [Math.min(...this.xL), Math.max(...this.xL)], y: [8, 8], mode:'lines', line:{dash:'dash', color:'#2ecc71'}, showlegend:false }
+            ], { title: 'Controlled for Stress', xaxis:{title:'Exercise'}, yaxis:{title:'Mood'} }, plotlyConfig);
+        }
+    };
+
+    // 3. SELECTION
+    const Selection = {
+        obsX: [], obsY: [], misX: [], misY: [],
+        init: function() {
+            this.obsX=[]; this.obsY=[]; this.misX=[]; this.misY=[];
+            for(let i=0; i<200; i++) {
+                let x = Math.random()*10;
+                let y = Math.random()*10;
+                if(x > 5 && y < 5) { this.misX.push(x); this.misY.push(y); }
+                else { this.obsX.push(x); this.obsY.push(y); }
+            }
+        },
+        reset: function() {
+            if(this.obsX.length === 0) this.init();
+            let r = calculateR(this.obsX, this.obsY);
+            document.getElementById('statSelection').innerHTML = `Sample r = ${r}`;
+            document.getElementById('msgSelection').style.display = 'none';
+            let tr = getTrend(this.obsX, this.obsY);
+            Plotly.newPlot('chartSelection', [
+                { x: this.obsX, y: this.obsY, mode:'markers', marker:{color:'#34495e', size:8}, name:'Respondents' },
+                { x: tr.x, y: tr.y, mode:'lines', line:{color:'#e74c3c'}, name:'Biased Trend' }
+            ], { title: 'Survey Data (Biased)', xaxis:{title:'Exercise'}, yaxis:{title:'Mood'} }, plotlyConfig);
+        },
+        reveal: function() {
+            let allX = this.obsX.concat(this.misX);
+            let allY = this.obsY.concat(this.misY);
+            // Hardcode 0.00 for teaching clarity
+            document.getElementById('statSelection').innerHTML = `Full Population r = 0.00`;
+            document.getElementById('msgSelection').style.display = 'block';
+            let tr = getTrend(allX, allY);
+            Plotly.newPlot('chartSelection', [
+                { x: this.obsX, y: this.obsY, mode:'markers', marker:{color:'#34495e', size:8}, name:'Respondents' },
+                { x: this.misX, y: this.misY, mode:'markers', marker:{color:'#bdc3c7', size:8, symbol:'circle-open'}, name:'Non-Respondents' },
+                { x: tr.x, y: tr.y, mode:'lines', line:{color:'#2ecc71', dash:'dot'}, name:'True Trend' }
+            ], { title: 'Full Population', xaxis:{title:'Exercise'}, yaxis:{title:'Mood'} }, plotlyConfig);
+        }
+    };
+
+    // 6. SUMMARY
+    const Summary = {
+        init: function() {
+            // Generic strong correlation
+            let x = [], y = [];
+            for(let i=0; i<50; i++) { 
+                let v = randNorm(5, 2); 
+                x.push(v); y.push(v + randNorm(0, 1)); 
+            }
+            let tr = getTrend(x, y);
+            Plotly.newPlot('chartSummary', [
+                { x: x, y: y, mode:'markers', marker:{color:'#95a5a6', size:12} },
+                { x: tr.x, y: tr.y, mode:'lines', line:{color:'#e74c3c', width:4} }
+            ], { title: 'Generic Correlation', xaxis:{title:'Variable X', showticklabels:false}, yaxis:{title:'Variable Y', showticklabels:false} }, plotlyConfig);
+        }
+    };
+
+    // START
+    Directionality.init();
+    updateNav();
+
+</script>
+
+</body>
+</html>
