@@ -72,6 +72,10 @@
             position: absolute; top: -15px; left: -15px; width: 30px; height: 30px; background: #e74c3c; 
             color: white; border-radius: 50%; font-weight: bold; display: flex; align-items: center; justify-content: center; 
         }
+        
+        /* New Link Style */
+        a.ref-link { color: #3498db; text-decoration: none; border-bottom: 1px dotted #3498db; transition: all 0.2s; }
+        a.ref-link:hover { background-color: #eaf2f8; border-bottom: 1px solid #3498db; }
     </style>
 </head>
 <body>
@@ -91,7 +95,8 @@
     <div id="slide-0" class="slide active">
         <h1 style="text-align: center;">How to use this tool</h1>
         <p style="text-align: center; max-width: 800px; margin: 0 auto 30px auto;">
-            This interactive tool visualizes the core arguments from <strong>Isager (2023)</strong>. 
+            This interactive tool visualizes the core arguments from 
+            <a href="https://pedermisager.org/blog/why_does_correlation_not_equal_causation/" target="_blank" class="ref-link"><strong>Isager (2023)</strong></a>. 
             It demonstrates why "Correlation does not equal a direct causal connection" by letting you explore 
             competing causal models for the same data.
         </p>
@@ -122,7 +127,12 @@
                 <em>"If you cannot imagine the truth, you cannot discover it."</em>
             </div>
         </div>
+        
         <p style="text-align: center; margin-top: 20px; font-style: italic;">Click "Next" to begin the investigation.</p>
+
+        <div style="margin-top: 30px; font-size: 0.85em; color: #95a5a6; text-align: center; border-top: 1px solid #ecf0f1; padding-top: 15px;">
+            Built by Carsten Bergenholtz and Gemini 3.0 Pro
+        </div>
     </div>
 
     <div id="slide-1" class="slide">
@@ -577,5 +587,5 @@
 
 </script>
 
-</body>
+</body>    
 </html>
