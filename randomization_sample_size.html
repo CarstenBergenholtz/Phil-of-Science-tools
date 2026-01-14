@@ -153,8 +153,8 @@
     <div class="main-container">
         
         <div class="controls">
-            <button class="btn-small" onclick="runSimulation(10)">
-                Simulate Small Group (N=10)
+            <button class="btn-small" onclick="runSimulation(20)">
+                Simulate Pilot Group (N=20)
             </button>
             <button class="btn-large" onclick="runSimulation(150)">
                 Simulate Large Group (N=150)
@@ -177,13 +177,13 @@
                     <strong>Randomization tends to be more likely to create identical groups as N increases.</strong>
                 </p>
                 <p>
-                    In small samples (<span class="highlight">N=10</span>), "luck" plays a huge role. You might accidentally get mostly males or mostly females, purely by chance. This is called <span class="highlight">chance imbalance</span>.
+                    In pilot samples (<span class="highlight">N=20</span>), "luck" plays a significant role. You might accidentally get mostly males or mostly females, purely by chance. This is called <span class="highlight">chance imbalance</span>.
                 </p>
                 <p>
                     In large samples (<span class="highlight">N=150</span>), the randomness evens out, ensuring that the groups being created are <span class="highlight">as identical as possible</span>.
                 </p>
                 <p style="font-size: 12px; color: #888; margin-top: 20px;">
-                    <em>Try clicking the buttons multiple times to see how the N=10 result jumps around, while N=150 stays consistent.</em>
+                    <em>Try clicking the buttons multiple times to see how the percentages fluctuate for N=20, while N=150 stays consistent.</em>
                 </p>
             </div>
 
@@ -251,6 +251,12 @@
                 }
             }
 
+            // Calculate Percentages
+            // (toFixed(1) keeps it to 1 decimal place, e.g., "45.0")
+            const malePct = ((males / n) * 100).toFixed(1);
+            const femalePct = ((females / n) * 100).toFixed(1);
+            const otherPct = ((other / n) * 100).toFixed(1);
+
             // Update Chart
             myChart.data.datasets[0].data = [males, females, other];
             myChart.update();
@@ -258,19 +264,22 @@
             // Update Feedback Text
             const feedbackBox = document.getElementById('feedback');
             
-            if (n === 10) {
+            // Format the stats string for reuse
+            const statsString = `Male: ${males} (${malePct}%), Female: ${females} (${femalePct}%), Other: ${other} (${otherPct}%)`;
+
+            if (n === 20) {
                 // Small Sample Logic
                 feedbackBox.innerHTML = `
-                    <span class="result-header">Result (N=10)</span>
-                    <span class="result-counts">Male: ${males}, Female: ${females}, Other: ${other}</span>
-                    Notice the instability. There is a high risk of <strong>chance imbalance</strong>.
+                    <span class="result-header">Result (N=20)</span>
+                    <span class="result-counts">${statsString}</span>
+                    Notice the instability. Even with 20 participants, there is a distinct risk of <strong>chance imbalance</strong>.
                 `;
                 feedbackBox.style.borderLeftColor = "#e74c3c"; // Red warning color
             } else {
                 // Large Sample Logic
                 feedbackBox.innerHTML = `
                     <span class="result-header">Result (N=150)</span>
-                    <span class="result-counts">Male: ${males}, Female: ${females}, Other: ${other}</span>
+                    <span class="result-counts">${statsString}</span>
                     Distribution is less unstable. The groups being created are more likely to be <strong>identical</strong> (lower risk of chance imbalance).
                 `;
                 feedbackBox.style.borderLeftColor = "#27ae60"; // Green success color
