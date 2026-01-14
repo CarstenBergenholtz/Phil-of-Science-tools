@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCT Randomization Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* HEADER */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            margin-top: 20px;
+        }
+        h1 {
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            color: #2c3e50;
+        }
+        .citation {
+            font-size: 16px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* MAIN CONTAINER */
+        .main-container {
+            background: #ffffff;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            width: 90%;
+            max-width: 1000px; 
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* CONTROLS */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-small { background-color: #e74c3c; color: white; }
+        .btn-small:hover { background-color: #c0392b; }
+        .btn-large { background-color: #27ae60; color: white; }
+        .btn-large:hover { background-color: #219150; }
+
+        /* FEEDBACK BAR */
+        .feedback-bar {
+            text-align: center;
+            font-size: 16px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 4px;
+            border-left: 5px solid #ccc;
+            display: block; 
+            line-height: 1.5;
+        }
+        
+        .result-header {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .result-counts {
+            font-family: monospace;
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* SPLIT VIEW (Chart Left, Lesson Right) */
+        .content-area {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 30px;
+            margin-top: 10px;
+        }
+
+        .chart-wrapper {
+            flex: 2; 
+            min-width: 300px;
+            height: 400px;
+            position: relative;
+        }
+
+        .lesson-box {
+            flex: 1; 
+            min-width: 250px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .lesson-box h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .lesson-box p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>RCT Randomization Simulator</h1>
+        <div class="citation">Based on Bergenholtz (2023)</div>
+    </header>
+
+    <div class="main-container">
+        
+        <div class="controls">
+            <button class="btn-small" onclick="runSimulation(10)">
+                Simulate Small Group (N=10)
+            </button>
+            <button class="btn-large" onclick="runSimulation(150)">
+                Simulate Large Group (N=150)
+            </button>
+        </div>
+
+        <div id="feedback" class="feedback-bar">
+            Select a sample size above to begin the simulation.
+        </div>
+
+        <div class="content-area">
+            
+            <div class="chart-wrapper">
+                <canvas id="genderChart"></canvas>
+            </div>
+
+            <div class="lesson-box">
+                <h3>Pedagogical Lesson</h3>
+                <p>
+                    <strong>Randomization tends to be more likely to create identical groups as N increases.</strong>
+                </p>
+                <p>
+                    In small samples (<span class="highlight">N=10</span>), "luck" plays a huge role. You might accidentally get mostly males or mostly females, purely by chance. This is called <span class="highlight">chance imbalance</span>.
+                </p>
+                <p>
+                    In large samples (<span class="highlight">N=150</span>), the randomness evens out, ensuring that the groups being created are <span class="highlight">as identical as possible</span>.
+                </p>
+                <p style="font-size: 12px; color: #888; margin-top: 20px;">
+                    <em>Try clicking the buttons multiple times to see how the N=10 result jumps around, while N=150 stays consistent.</em>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- CHART SETUP ---
+        const ctx = document.getElementById('genderChart').getContext('2d');
+        
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Male', 'Female', 'Other'],
+                datasets: [{
+                    label: 'Participants',
+                    data: [0, 0, 0], 
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)', // Blue
+                        'rgba(255, 99, 132, 0.7)', // Red
+                        'rgba(255, 206, 86, 0.7)'  // Yellow
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Count' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                },
+                animation: {
+                    duration: 500
+                }
+            }
+        });
+
+        // --- SIMULATION LOGIC ---
+        function runSimulation(n) {
+            let males = 0;
+            let females = 0;
+            let other = 0;
+
+            // Generate Random Data
+            // Assumed population: Male ~48%, Female ~48%, Other ~4%
+            for (let i = 0; i < n; i++) {
+                const rand = Math.random();
+                if (rand < 0.48) {
+                    males++;
+                } else if (rand < 0.96) {
+                    females++;
+                } else {
+                    other++;
+                }
+            }
+
+            // Update Chart
+            myChart.data.datasets[0].data = [males, females, other];
+            myChart.update();
+
+            // Update Feedback Text
+            const feedbackBox = document.getElementById('feedback');
+            
+            if (n === 10) {
+                // Small Sample Logic
+                feedbackBox.innerHTML = `
+                    <span class="result-header">Result (N=10)</span>
+                    <span class="result-counts">Male: ${males}, Female: ${females}, Other: ${other}</span>
+                    Notice the instability. There is a high risk of <strong>chance imbalance</strong>.
+                `;
+                feedbackBox.style.borderLeftColor = "#e74c3c"; // Red warning color
+            } else {
+                // Large Sample Logic
+                feedbackBox.innerHTML = `
+                    <span class="result-header">Result (N=150)</span>
+                    <span class="result-counts">Male: ${males}, Female: ${females}, Other: ${other}</span>
+                    Distribution is less unstable. The groups being created are more likely to be <strong>identical</strong> (lower risk of chance imbalance).
+                `;
+                feedbackBox.style.borderLeftColor = "#27ae60"; // Green success color
+            }
+        }
+    </script>
+</body>
+</html>
