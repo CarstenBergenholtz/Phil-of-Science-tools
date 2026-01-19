@@ -16,7 +16,7 @@ This simulation demonstrates why randomization alone isn't enough. It shows how 
 👉 **[Click here to run the Randomization Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/randomization_sample_size.html)**
 
 ### 4. Statistical Control Intuition
-This tool visualizes how "controlling for a variable" works visually. It demonstrates how accounting for a confounder (like temperature) can reveal the true relationship between two variables (like ice cream sales and shark attacks).
+**This tool visualizes how "controlling for a variable" works visually. It demonstrates how accounting for a confounder (like temperature) can reveal the true relationship between two variables (like ice cream sales and shark attacks).**
 👉 **[Click here to run the Statistical Control Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/statistical_control_intuition.html)**
 ---
 *Built by Carsten Bergenholtz and Gemini.*
