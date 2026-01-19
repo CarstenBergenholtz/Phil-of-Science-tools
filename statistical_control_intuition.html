@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confounding: Total Control Effect</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://unpkg.com/simple-statistics@7.8.0/dist/simple-statistics.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1100px; margin: 0 auto; padding: 10px; background-color: #f4f6f8; color: #2c3e50; }
+    .container { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); min-height: 850px; position: relative; }
+
+    /* Nav */
+    .progress-bar { display: flex; gap: 8px; margin-bottom: 25px; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px; }
+    .dot {
+      flex-grow: 1; padding: 8px; background-color: #ecf0f1; border-radius: 6px; cursor: pointer; transition: 0.3s;
+      text-align: center; font-size: 11px; color: #7f8c8d; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .dot.active { background-color: #2c3e50; color: white; }
+    .dot:hover:not(.active) { background-color: #bdc3c7; }
+
+    /* Slides */
+    .slide { display: none; animation: fadeIn 0.4s ease-in-out; }
+    .slide.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Layout */
+    .split-layout { display: flex; gap: 40px; }
+    .left-panel { flex: 2; }
+    .right-panel { flex: 1.2; display: flex; flex-direction: column; justify-content: center; }
+
+    /* Typography */
+    h1 { margin-top: 0; color: #2c3e50; font-size: 2em; letter-spacing: -0.5px; }
+    h2 { margin-top: 0; font-size: 1.4em; color: #34495e; margin-bottom: 20px; font-weight: 600; }
+    p { line-height: 1.6; font-size: 1.05em; margin-bottom: 18px; color: #4a5568; }
+    
+    .highlight-box {
+        background: #f8f9fa; border-left: 5px solid #3498db; padding: 20px; border-radius: 4px; margin-bottom: 20px;
+    }
+
+    /* Buttons */
+    .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    button.action-btn {
+      width: 100%; padding: 14px 20px; font-size: 14px; cursor: pointer; 
+      background-color: white; color: #2c3e50; border: 2px solid #ecf0f1;
+      border-radius: 8px; font-weight: bold; text-align: left; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    button.action-btn:hover { border-color: #3498db; background-color: #fbfbfb; }
+    button.action-btn.active { background-color: #3498db; color: white; border-color: #3498db; }
+    
+    button.reset-btn {
+        margin-top: 20px; background: none; border: none; color: #95a5a6; 
+        font-size: 12px; cursor: pointer; text-decoration: underline; width: auto; align-self: center;
+    }
+
+    .nav-footer { position: absolute; bottom: 30px; left: 30px; right: 30px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 20px; }
+    .nav-arrow { background-color: #2c3e50; color: white; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: bold; }
+    .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="progress-bar">
+    <div class="dot active" onclick="goToSlide(0)">1. Concept</div>
+    <div class="dot" onclick="goToSlide(1)">2. Interactive Tool</div>
+    <div class="dot" onclick="goToSlide(2)">3. The Explanation</div>
+  </div>
+
+  <div id="slide-0" class="slide active">
+    <div style="max-width: 800px; margin: 40px auto; text-align: center;">
+      <h1>Does Exercise Cause Job Satisfaction?</h1>
+      <p style="font-size: 1.2em; color: #7f8c8d;">
+          Why healthy people can skew your data.
+      </p>
+      
+      <div style="text-align: left; background: #eef2f7; padding: 40px; border-radius: 12px; margin-top: 40px;">
+        <p style="font-size: 0.9em; color: #e74c3c; margin-bottom: 20px; font-style: italic;">
+            <strong>Note:</strong> The numbers and relationships shown in this tool are hypothetical and intentionally exaggerated for educational clarity.
+        </p>
+        <hr style="border: 0; border-top: 1px solid #dcdde1; margin-bottom: 20px;">
+
+        <h3 style="margin-top: 0; color: #2980b9;">The Scenario</h3>
+        <p>Imagine a study finds that people who <strong>Exercise</strong> more report higher <strong>Job Satisfaction</strong>.</p>
+        
+        <p><strong>The Problem (Confounding):</strong></p>
+        <p><strong>Health</strong> acts as a confounder. Healthy people tend to:</p>
+        <ol style="margin-bottom: 20px;">
+            <li>Exercise more (because they can).</li>
+            <li>Be more satisfied at work (because they feel good in general).</li>
+        </ol>
+        
+        <p><strong>The Illusion:</strong></p>
+        <p>If we ignore Health, it looks like running makes you love your job. But what if we compare apples to apples?</p>
+      </div>
+
+      <p style="margin-top: 40px; font-style: italic; color: #95a5a6;">Click "Next" to visualize the data.</p>
+    </div>
+  </div>
+
+  <div id="slide-1" class="slide">
+    <div class="split-layout">
+      <div class="left-panel">
+        <div id="chartMain" style="width:100%; height:550px;"></div>
+      </div>
+
+      <div class="right-panel">
+        <h2>What happens when we control?</h2>
+        
+        <p style="font-size: 0.95em; color: #7f8c8d;">
+            See how the trend line changes when we account for Health.
+        </p>
+
+        <div class="btn-group">
+            <button class="action-btn active" id="btnRaw" onclick="App.setMode('raw')">
+                <span>1. Raw Data (Ignore Health)</span>
+                <span style="font-size:18px;">🚫</span>
+            </button>
+            <div id="descRaw" style="font-size: 0.9em; color: #e74c3c; margin-bottom: 10px; padding: 0 10px;">
+                The <strong style="color:#e74c3c">Red Line</strong> is steep. It suggests a strong relationship. But look at who is in the corners...
+            </div>
+
+            <button class="action-btn" id="btnCtrl" onclick="App.setMode('controlled')">
+                <span>2. Control for Health</span>
+                <span style="font-size:18px;">✅</span>
+            </button>
+            <div id="descCtrl" style="display:none; font-size: 0.9em; color: #27ae60; margin-bottom: 10px; padding: 0 10px;">
+                The <strong>lines within the groups</strong> are flat! When we look <em>within</em> the High Health group (or within the Low Health group), exercise doesn't change satisfaction much.
+            </div>
+        </div>
+
+        <button class="reset-btn" onclick="App.generateNewData()">⟳ Generate New Sample Data</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="slide-2" class="slide">
+    <div class="split-layout">
+      <div class="left-panel">
+        <div id="chartExplain" style="width:100%; height:600px;"></div>
+      </div>
+
+      <div class="right-panel" style="justify-content: flex-start;">
+        <h2>The Three-Layer Logic</h2>
+        
+        <div class="highlight-box">
+            <p><strong>1. The Raw Trend (<span style="color:#e74c3c">Red</span>)</strong><br>
+            It climbs the stairs. It jumps from the Low Health group to the High Health group, creating a fake diagonal.</p>
+        </div>
+
+        <div class="highlight-box" style="border-left-color: #f39c12; background: #fffcf0;">
+            <p><strong>2. The Within-Group Trends (<span style="color:#d4ac0d">Yellow</span>/<span style="color:#e67e22">Orange</span>/<span style="color:#3498db">Blue</span>)</strong><br>
+            Look closely at each colored segment. Inside each group, the line is flat. Satisfaction isn't increasing with exercise.</p>
+        </div>
+
+        <div class="highlight-box" style="border-left-color: #27ae60; background: #f0fdf4;">
+            <p><strong>3. The Final Result (<span style="color:#27ae60">Green</span>)</strong><br>
+            This line is the average of the three colored segments. Since the segments are flat, the <strong>Total Controlled Line</strong> is flat.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button id="btnPrev" class="nav-arrow" onclick="changeSlide(-1)">Previous</button>
+    <div id="slideCounter" style="color: #bdc3c7; font-weight: bold; letter-spacing: 1px;">1 / 3</div>
+    <button id="btnNext" class="nav-arrow" onclick="changeSlide(1)">Next</button>
+  </div>
+</div>
+
+<script>
+// --- APP LOGIC ---
+const App = {
+    mode: 'raw', // 'raw' or 'controlled'
+    data: null,
+    
+    init: function() {
+        this.generateNewData();
+    },
+
+    setMode: function(newMode) {
+        this.mode = newMode;
+        
+        // Update Buttons
+        document.getElementById('btnRaw').classList.toggle('active', newMode === 'raw');
+        document.getElementById('btnCtrl').classList.toggle('active', newMode === 'controlled');
+        
+        // Update Text
+        document.getElementById('descRaw').style.display = newMode === 'raw' ? 'block' : 'none';
+        document.getElementById('descCtrl').style.display = newMode === 'controlled' ? 'block' : 'none';
+
+        this.renderMain();
+    },
+
+    generateNewData: function() {
+        // We create 3 distinct CLUSTERS based on HEALTH
+        // ALIGNED NAMES: Low Health, Medium Health, High Health
+        const nPerGroup = 50;
+        const x = [], y = [], group = [];
+
+        // Helper for randomness
+        const rand = (min, max) => Math.random() * (max - min) + min;
+
+        // GROUP 1: LOW HEALTH (Bottom Left)
+        for(let i=0; i<nPerGroup; i++) {
+            x.push(rand(5, 25)); // Low Exercise
+            y.push(20 + rand(-8, 8)); // Low Satisfaction
+            group.push('Low Health');
+        }
+
+        // GROUP 2: MEDIUM HEALTH (Middle)
+        for(let i=0; i<nPerGroup; i++) {
+            x.push(rand(40, 60)); // Med Exercise
+            y.push(50 + rand(-8, 8)); // Med Satisfaction
+            group.push('Medium Health');
+        }
+
+        // GROUP 3: HIGH HEALTH (Top Right)
+        for(let i=0; i<nPerGroup; i++) {
+            x.push(rand(75, 95)); // High Exercise
+            y.push(80 + rand(-8, 8)); // High Satisfaction
+            group.push('High Health');
+        }
+
+        this.data = { x, y, group };
+        this.renderMain();
+    },
+
+    renderMain: function() {
+        const d = this.data;
+        const traces = [];
+
+        // 1. CALCULATE RAW REGRESSION (The Steep Red Line)
+        const lrRaw = ss.linearRegression(d.x.map((xi, i) => [xi, d.y[i]]));
+        const rawLine = {
+            x: [0, 100],
+            y: [lrRaw.m * 0 + lrRaw.b, lrRaw.m * 100 + lrRaw.b]
+        };
+
+        // 2. CONFIGURE TRACES BASED ON MODE
+        if (this.mode === 'raw') {
+            // RAW MODE: All dots grey, One Red Line
+            traces.push({
+                x: d.x, y: d.y, mode: 'markers',
+                marker: { color: '#bdc3c7', size: 10, opacity: 0.6 },
+                name: 'Employee Responses'
+            });
+
+            traces.push({
+                x: rawLine.x, y: rawLine.y, mode: 'lines',
+                line: { color: '#e74c3c', width: 5 },
+                name: 'Apparent Trend'
+            });
+        } else {
+            // CONTROLLED MODE: Dots colored by group
+            
+            // REORDERED for legend: Low, High, then Medium (bottom row)
+            const groups = ['Low Health', 'High Health', 'Medium Health'];
+            const colors = ['#d4ac0d', '#3498db', '#e67e22']; // Darker Yellow/Gold, Blue, Orange
+            
+            groups.forEach((g, idx) => {
+                const gx = d.x.filter((_, i) => d.group[i] === g);
+                const gy = d.y.filter((_, i) => d.group[i] === g);
+                
+                // Scatter for this group
+                traces.push({
+                    x: gx, y: gy, mode: 'markers',
+                    marker: { color: colors[idx], size: 10, opacity: 0.7 },
+                    name: g
+                });
+
+                // Regression for this group (The Group Segments)
+                const lrG = ss.linearRegression(gx.map((val, k) => [val, gy[k]]));
+                const minX = Math.min(...gx), maxX = Math.max(...gx);
+
+                traces.push({
+                    x: [minX - 5, maxX + 5], y: [lrG.m*(minX-5) + lrG.b, lrG.m*(maxX+5) + lrG.b],
+                    mode: 'lines',
+                    line: { color: colors[idx], width: 4 }, // Match Group Color
+                    showlegend: false 
+                });
+            });
+            
+            // Faded Red line for comparison
+            traces.push({
+                x: rawLine.x, y: rawLine.y, mode: 'lines',
+                line: { color: '#e74c3c', width: 2, dash: 'dot' },
+                name: 'Raw Trend (Ignored)', opacity: 0.3
+            });
+        }
+
+        const layout = {
+            margin: { t: 30, l: 60, r: 50, b: 60 },
+            xaxis: { title: 'Amount of Exercise', range: [0, 100] },
+            yaxis: { title: 'Job Satisfaction', range: [0, 100] },
+            showlegend: true,
+            legend: { orientation: 'h', y: -0.15 },
+            plot_bgcolor: 'white',
+            // ANNOTATIONS - ALIGNED TERMS
+            annotations: this.mode === 'controlled' ? [
+                {
+                    x: 100, y: 100, xref: 'x', yref: 'y',
+                    text: 'High Health',
+                    showarrow: false,
+                    font: { color: '#3498db', size: 14, weight: 'bold' },
+                    align: 'right',
+                    bgcolor: '#f0f8ff', bordercolor: '#3498db', borderwidth: 1, borderpad: 5
+                },
+                {
+                    x: 0, y: 0, xref: 'x', yref: 'y',
+                    text: 'Low Health',
+                    showarrow: false,
+                    font: { color: '#d4ac0d', size: 14, weight: 'bold' }, // Darker Gold Text
+                    align: 'left',
+                    bgcolor: '#fff9e6', bordercolor: '#d4ac0d', borderwidth: 1, borderpad: 5
+                }
+            ] : []
+        };
+
+        Plotly.newPlot('chartMain', traces, layout, {displayModeBar: false});
+    }
+};
+
+
+// --- EXPLANATION SLIDE RENDERER ---
+function renderExplanation() {
+    // GENERATE RICH DATA FOR EXPLANATION (Not just 6 dots)
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const makeGroup = (xBase, yBase) => {
+        let xArr = [], yArr = [];
+        for(let i=0; i<40; i++) {
+            xArr.push(rand(xBase-10, xBase+10));
+            yArr.push(rand(yBase-8, yBase+8));
+        }
+        return {x: xArr, y: yArr};
+    }
+
+    const lowData = makeGroup(18, 20); // Low Health
+    const medData = makeGroup(50, 50); // Medium Health
+    const highData = makeGroup(85, 80); // High Health
+
+    // COLORS: Darker Gold, Orange, Blue
+    const cLow = '#d4ac0d'; 
+    const cMed = '#e67e22'; 
+    const cHigh = '#3498db';
+
+    const traces = [
+        // Dots
+        { x: lowData.x, y: lowData.y, mode: 'markers', marker: {color: cLow, size: 10, opacity:0.6}, showlegend: false },
+        { x: medData.x, y: medData.y, mode: 'markers', marker: {color: cMed, size: 10, opacity:0.6}, showlegend: false },
+        { x: highData.x, y: highData.y, mode: 'markers', marker: {color: cHigh, size: 10, opacity:0.6}, showlegend: false },
+        
+        // 1. STEEP RED LINE (Raw)
+        { x: [15, 90], y: [20, 82], mode: 'lines', line: {color: '#e74c3c', width: 3, dash: 'dot'}, name: 'Raw Trend (Across Groups)' },
+
+        // 2. COLORED SEGMENTS (Within Groups) - EXPLICITLY IN LEGEND NOW
+        { x: [5, 30], y: [20, 20], mode: 'lines', line: {color: cLow, width: 4}, name: 'Trend (Low Health)' }, 
+        { x: [40, 60], y: [50, 50], mode: 'lines', line: {color: cMed, width: 4}, name: 'Trend (Med Health)' }, 
+        { x: [75, 95], y: [80, 80], mode: 'lines', line: {color: cHigh, width: 4}, name: 'Trend (High Health)' }, 
+
+        // 3. BIG GREEN LINE (Total Controlled Result)
+        { 
+            x: [0, 100], y: [50, 50], 
+            mode: 'lines', 
+            line: {color: '#27ae60', width: 6, dash: 'solid'}, 
+            name: 'Total Controlled Trend' 
+        }
+    ];
+
+    const layout = {
+        margin: { t: 40, l: 40, r: 40, b: 40 },
+        xaxis: { title: 'Exercise', showticklabels: false, range: [0, 110] }, 
+        yaxis: { title: 'Job Satisfaction', showticklabels: false, range: [0, 110] },
+        legend: { orientation: 'h', y: -0.2 }, // Moved Legend lower to accommodate rows
+        // ANNOTATIONS
+        annotations: [
+            {
+                x: 100, y: 100, xref: 'x', yref: 'y',
+                text: 'High Health',
+                showarrow: false,
+                font: { color: cHigh, size: 12, weight: 'bold' },
+                align: 'right',
+                bgcolor: '#f0f8ff', bordercolor: cHigh, borderwidth: 1, borderpad: 5
+            },
+            {
+                x: 0, y: 0, xref: 'x', yref: 'y',
+                text: 'Low Health',
+                showarrow: false,
+                font: { color: cLow, size: 12, weight: 'bold' },
+                align: 'left',
+                bgcolor: '#fff9e6', bordercolor: cLow, borderwidth: 1, borderpad: 5
+            }
+        ]
+    };
+
+    Plotly.newPlot('chartExplain', traces, layout, {staticPlot: true});
+}
+
+
+// --- NAVIGATION ---
+let currentSlide = 0;
+function updateNav() {
+    document.querySelectorAll('.slide').forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+    
+    document.getElementById('slideCounter').innerText = `${currentSlide + 1} / 3`;
+    document.getElementById('btnPrev').disabled = currentSlide === 0;
+    document.getElementById('btnNext').disabled = currentSlide === 2;
+
+    if(currentSlide === 1) App.renderMain();
+    if(currentSlide === 2) renderExplanation();
+}
+function changeSlide(dir) { currentSlide += dir; updateNav(); }
+function goToSlide(idx) { currentSlide = idx; updateNav(); }
+
+// Start
+App.init();
+updateNav();
+
+</script>
+</body>
+</html>
