@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Closed vs. Open Approach</title>
+    <style>
+        :root {
+            --bg-app: #f0f4f8;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --die-base: #e2e8f0;
+            --die-border: #94a3b8;
+            
+            /* Highlight Colors */
+            --color-pred-bg: #16a34a; /* Vibrant Green */
+            --color-pred-border: #14532d;
+            --color-open-bg: #fbbf24; /* Amber/Orange */
+            --color-open-text: #451a03;
+            --color-open-border: #d97706;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-app);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 850px;
+            width: 100%;
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+        }
+
+        h1 { margin-top: 0; font-size: 1.75rem; color: #0f172a; }
+        p.intro { line-height: 1.6; color: #475569; font-size: 1.05rem; }
+        p.intro b { color: #0f172a; }
+
+        .controls-area {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 24px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .btn-throw {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            align-self: flex-start;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+        .btn-throw:hover { background: #1d4ed8; transform: translateY(-2px); }
+
+        .legend {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .legend-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .legend-box { 
+            width: 24px; height: 24px; 
+            border-radius: 6px; 
+            border: 3px solid transparent;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            padding: 20px;
+            border-radius: 12px;
+            border-width: 3px;
+            border-style: solid;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-box.prediction {
+            background: #dcfce7;
+            border-color: var(--color-pred-bg);
+            color: var(--color-pred-border);
+        }
+
+        .stat-box.open {
+            background: #fef3c7;
+            border-color: var(--color-open-border);
+            color: var(--color-open-text);
+        }
+
+        .stat-title { font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
+        .stat-value { font-size: 2.5rem; font-weight: 800; margin: 4px 0 8px 0; }
+        .stat-desc { font-size: 0.95rem; font-weight: 500; }
+
+        .dice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .die {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--die-base);
+            border: 2px solid var(--die-border);
+            color: var(--text-main);
+            border-radius: 8px;
+            font-size: 1.75rem;
+            font-weight: 800;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            user-select: none;
+        }
+
+        /* Highlights */
+        .die.highlight-open {
+            background: var(--color-open-bg);
+            border-color: var(--color-open-border);
+            color: var(--color-open-text);
+            border-width: 3px;
+            z-index: 1;
+        }
+
+        .die.highlight-pred {
+            background: var(--color-pred-bg);
+            border-color: var(--color-pred-border);
+            color: white;
+            border-width: 4px;
+            z-index: 2; 
+            transform: scale(1.15);
+            box-shadow: 0 10px 15px -3px rgba(22, 163, 74, 0.4);
+        }
+        
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>The Closed vs. Open Approach</h1>
+    <p class="intro">
+        This tool illustrates the distinction between the 'Closed' and 'Open' approach.
+        <br><br>
+        1. <b>Closed Approach:</b> We make a specific bet and promise. We ask: "Is <i>this specific</i> case true?" Here, we check only for <i>exactly</i> three 6s in a row (6-6-6).
+        <br><br>
+        2. <b>Open Approach:</b> We look at data without making specific predictions beforehand. We report whatever noteworthy patterns are found inductively—e.g., triplets (e.g. 5-5-5) or runs of 4 (e.g. 1-2-3-4).
+    </p>
+
+    <div class="controls-area">
+        <button class="btn-throw" onclick="rollDice()">Throw 100 Dice</button>
+        
+        <div class="legend">
+            <div class="legend-item" style="color: var(--color-pred-border);">
+                <div class="legend-box" style="background: var(--color-pred-bg); border-color: var(--color-pred-border);"></div>
+                <span>Closed Approach (Specific Bet)</span>
+            </div>
+            <div class="legend-item" style="color: var(--color-open-text);">
+                <div class="legend-box" style="background: var(--color-open-bg); border-color: var(--color-open-border);"></div>
+                <span>Open Approach (Inductive Pattern)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box prediction">
+            <div class="stat-title">Closed Approach</div>
+            <div class="stat-value" id="predCount">0</div>
+            <div class="stat-desc">Matches the specific bet (6-6-6).</div>
+        </div>
+        <div class="stat-box open">
+            <div class="stat-title">Open Approach</div>
+            <div class="stat-value" id="openCount">0</div>
+            <div class="stat-desc">Noteworthy patterns found inductively.</div>
+        </div>
+    </div>
+
+    <div id="grid" class="dice-grid"></div>
+</div>
+
+<script>
+    const N_ROLLS = 100;
+
+    function rollDice() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        
+        // 1. Generate Data
+        const rolls = [];
+        for (let i = 0; i < N_ROLLS; i++) {
+            rolls.push(Math.floor(Math.random() * 6) + 1);
+        }
+
+        const status = new Array(N_ROLLS).fill(0);
+        let predCount = 0;
+        let openCount = 0;
+
+        // --- OPEN APPROACH (Inductive) ---
+        // Look for patterns found after the fact
+
+        // A. Runs of 4 (e.g., 1-2-3-4)
+        for (let i = 0; i < N_ROLLS - 3; i++) {
+            let a = rolls[i], b = rolls[i+1], c = rolls[i+2], d = rolls[i+3];
+            
+            // Ascending Run of 4
+            let isRunUp = (b === a + 1) && (c === b + 1) && (d === c + 1);
+            // Descending Run of 4
+            let isRunDown = (b === a - 1) && (c === b - 1) && (d === c - 1);
+
+            if (isRunUp || isRunDown) {
+                openCount++;
+                for (let j = 0; j < 4; j++) {
+                    if (status[i+j] < 1) status[i+j] = 1; 
+                }
+            }
+        }
+
+        // B. Triples (Length 3) ONLY
+        for (let i = 0; i < N_ROLLS - 2; i++) {
+            let a = rolls[i], b = rolls[i+1], c = rolls[i+2];
+            
+            // Triplets (3 of a kind)
+            let isTriple = (a === b && b === c);
+
+            if (isTriple) {
+                openCount++;
+                for (let j = 0; j < 3; j++) {
+                    if (status[i+j] < 1) status[i+j] = 1; 
+                }
+            }
+        }
+
+        // --- CLOSED APPROACH (Specific Bet) ---
+        // Check ONLY for the specific bet: 6-6-6
+        for (let i = 0; i < N_ROLLS - 2; i++) {
+            if (rolls[i] === 6 && rolls[i+1] === 6 && rolls[i+2] === 6) {
+                predCount++;
+                for (let j = 0; j < 3; j++) {
+                    status[i+j] = 2; // Override
+                }
+            }
+        }
+
+        // --- RENDER ---
+        document.getElementById('predCount').textContent = predCount;
+        document.getElementById('openCount').textContent = openCount;
+
+        rolls.forEach((val, index) => {
+            const div = document.createElement('div');
+            div.className = 'die';
+            div.textContent = val;
+            
+            if (status[index] === 2) {
+                div.classList.add('highlight-pred');
+            } else if (status[index] === 1) {
+                div.classList.add('highlight-open');
+            }
+            grid.appendChild(div);
+        });
+    }
+
+    window.onload = rollDice;
+</script>
+
+</body>
+</html>
