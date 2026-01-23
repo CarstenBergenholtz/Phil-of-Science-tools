@@ -19,5 +19,9 @@ This simulation demonstrates why randomization alone isn't enough. It shows how 
 This tool visualizes how "controlling for a variable" works visually. It demonstrates how accounting for a confounder (like temperature) can reveal the true relationship between two variables (like ice cream sales and shark attacks).
 👉 **[Click here to run the Statistical Control Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/statistical_control_intuition.html)**
 
+### 5. The "Dice" Challenge (Effect vs. Sample Size)
+This simulation challenges you to find a "hidden effect." It demonstrates that finding a significant result depends heavily on having a powerful enough "microscope" (Sample Size) relative to the size of the effect you are looking for.
+👉 **[Click here to run the Effect Size Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/effect_sample_size.html)**
+
 ---
 *Built by Carsten Bergenholtz and Gemini.*
