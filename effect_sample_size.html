@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation: The "Hidden" Effect</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #003d73;
+            --secondary-color: #8dae10;
+            --bg-color: #f4f4f4;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --light-text: #666;
+            --danger: #d9534f;
+            --success: #5cb85c;
+            --warning: #f0ad4e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        header {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1 { color: var(--primary-color); margin-top: 0; font-size: 2em; }
+        
+        .intro-question {
+            font-size: 1.05em;
+            color: #444;
+            font-style: italic;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #8dae10;
+            margin-bottom: 30px;
+        }
+
+        .simulation-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 320px;
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .visuals {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* Sliders */
+        .control-group {
+            margin-bottom: 25px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        label { font-weight: bold; color: var(--primary-color); }
+        .val-display { font-weight: bold; color: #333; background: #eee; padding: 2px 8px; border-radius: 4px;}
+
+        input[type=range] { width: 100%; cursor: pointer; }
+
+        /* Real World Analogy Box */
+        .analogy-box {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #555;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+        .analogy-title { font-weight: bold; font-size: 0.85em; text-transform: uppercase; color: #888; margin-bottom: 5px; }
+        .analogy-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+        .analogy-icon { font-size: 1.2em; min-width: 25px; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        .btn:hover { background-color: #002a50; }
+
+        .results-panel {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            background-color: #fff;
+            display: none;
+        }
+
+        .result-status {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .status-ns { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .status-sig { background-color: #eaffea; color: var(--success); border: 1px solid var(--success); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .stat-box { background: #fafafa; padding: 15px; border-radius: 6px; border-left: 4px solid #ccc; }
+        .stat-box h4 { margin: 0 0 5px 0; color: #555; }
+        .stat-box p { margin: 0; font-size: 1.4em; font-weight: bold; }
+
+        .pedagogical-note {
+            display: none; 
+            margin-top: 40px;
+            font-size: 0.95em;
+            color: #333;
+            background: #e8f4fd;
+            padding: 20px;
+            border-left: 5px solid #003d73;
+            border-radius: 4px;
+        }
+        .pedagogical-note h4 { margin-top: 0; color: #003d73; }
+
+        .footer-credits {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>The "Dice" Challenge: The Importance of Effect and Sample Size</h1>
+        
+        <div class="intro-question">
+            "If you run a study and find no significant result, does that mean your theory is false? 
+            Or was your 'microscope' (sample size) just too weak to see an actual effect?"
+        </div>
+    </header>
+
+    <div class="simulation-area">
+        <div class="controls">
+            <h3>1. The "Truth" (Effect Size)</h3>
+            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">How 'biased' is Die B compared to the fair Die A (16.7%)?</p>
+            
+            <div class="control-group">
+                <div class="control-header">
+                    <label for="effectSize">Die B Bias</label>
+                    <span class="val-display" id="effectDisplay">20%</span>
+                </div>
+                <div style="font-size: 0.8em; color: #555; margin-bottom: 8px;">
+                    <em>Chance of rolling a 6 is <strong><span id="prob-text">20</span>%</strong> (vs 16.7% for normal die).</em>
+                </div>
+
+                <input type="range" id="effectSize" min="17" max="60" value="20" step="1">
+                
+                <div class="analogy-box" id="analogyContent">
+                    </div>
+            </div>
+
+            <h3>2. The "Effort" (Sample Size)</h3>
+            <div class="control-group">
+                <div class="control-header">
+                    <label for="sampleSize">Throws (N)</label>
+                    <span class="val-display" id="sampleDisplay">30</span>
+                </div>
+                <input type="range" id="sampleSize" min="30" max="2000" value="30" step="10">
+                <div style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                    Small N = Quick/Rough study.<br>Large N = Rigorous study.
+                </div>
+            </div>
+
+            <button class="btn" onclick="runSimulation()">Throw Dice & Analyze</button>
+        </div>
+
+        <div class="visuals">
+            <canvas id="resultsChart" width="300" height="250"></canvas>
+        </div>
+    </div>
+
+    <div class="results-panel" id="resultsPanel">
+        <h3>Study Findings</h3>
+        
+        <div class="stats-grid">
+            <div class="stat-box" style="border-left-color: #36a2eb;">
+                <h4>Die A (Fair)</h4>
+                <p><span id="resA-pct">0</span>%</p>
+                <small>Actual Sixes: <span id="resA-count">0</span></small>
+            </div>
+            <div class="stat-box" style="border-left-color: #ff6384;">
+                <h4>Die B (Biased)</h4>
+                <p><span id="resB-pct">0</span>%</p>
+                <small>Actual Sixes: <span id="resB-count">0</span></small>
+            </div>
+        </div>
+
+        <div id="conclusionBox" class="result-status status-ns"></div>
+
+        <div style="text-align: left; margin-top: 15px; color: #555;">
+            <strong>P-value:</strong> <span id="p-value-display"></span> <span id="p-interp" style="font-style: italic;"></span>
+        </div>
+    </div>
+
+    <div id="pedagogicalNote" class="pedagogical-note">
+        <h4>General Take-away</h4>
+        <p id="takeawayText">
+            </p>
+        <div style="margin-top: 15px; padding-top:15px; border-top: 1px solid #bcdbf7; font-size: 0.9em;">
+            <strong>Important:</strong> Just because a study shows "no significant difference" (p > 0.05), that <strong>does not mean</strong> the dice are equal. We <em>know</em> Die B is biased (because you set the slider!), but with small samples, science often fails to show what is actually true. <em>This principle applies to all quantitative work: whether you are doing experiments, surveys, or other data comparisons.</em>
+        </div>
+    </div>
+
+    <div class="footer-credits">
+        Built by Carsten Bergenholtz and Gemini 3.0 Pro
+    </div>
+</div>
+
+<script>
+    // --- Configuration ---
+    const PROB_FAIR = 1/6; // ~16.67%
+    
+    // --- UI Elements ---
+    const sliderSample = document.getElementById('sampleSize');
+    const displaySample = document.getElementById('sampleDisplay');
+    
+    const sliderEffect = document.getElementById('effectSize');
+    const displayEffect = document.getElementById('effectDisplay');
+    const probText = document.getElementById('prob-text');
+    const analogyContent = document.getElementById('analogyContent');
+
+    const resultsPanel = document.getElementById('resultsPanel');
+    const pedNote = document.getElementById('pedagogicalNote');
+    
+    let myChart = null;
+
+    // --- Init ---
+    updateAnalogy(); // Run once on load
+
+    // --- Event Listeners ---
+    sliderSample.oninput = function() {
+        displaySample.innerHTML = this.value;
+    }
+
+    sliderEffect.oninput = function() {
+        displayEffect.innerHTML = this.value + "%";
+        probText.innerHTML = this.value;
+        updateAnalogy();
+    }
+
+    // --- Core Logic: Update Real World Analogies ---
+    function updateAnalogy() {
+        const p1 = PROB_FAIR * 100;
+        const p2 = parseFloat(sliderEffect.value);
+        const diff = p2 - p1;
+
+        // Approx Cohen's d logic
+        const d_approx = diff * 0.025; 
+        const cm_diff = (d_approx * 7).toFixed(1);
+
+        let heightText = "";
+        let generalText = "";
+        let difficulty = "";
+
+        if (diff < 1) {
+            heightText = "Identical height.";
+            generalText = "No real effect.";
+        } else if (diff < 4) {
+            heightText = `Like a <strong>${cm_diff} cm</strong> height difference. (Invisible to the eye).`;
+            generalText = "Medicine: Like taking aspirin to prevent heart attacks. Effective, but you need huge samples to prove it.";
+            difficulty = "Detection Difficulty: HARD";
+        } else if (diff < 10) {
+            heightText = `Like a <strong>${cm_diff} cm</strong> height difference. (Barely noticeable).`;
+            generalText = "Sports: Like the 'Home Field Advantage' in a single game.";
+            difficulty = "Detection Difficulty: MEDIUM";
+        } else if (diff < 25) {
+            heightText = `Like a <strong>${cm_diff} cm</strong> height difference. (Clearly visible).`;
+            generalText = "Education: The difference in test scores between a prepared and unprepared class.";
+            difficulty = "Detection Difficulty: EASY";
+        } else {
+            heightText = `Like a <strong>${cm_diff} cm</strong> difference. (A Child vs. Adult).`;
+            generalText = "Obvious: Like checking if a parachute works.";
+            difficulty = "Detection Difficulty: TRIVIAL";
+        }
+
+        let ageComp = "";
+        if (p2 > 50) {
+             ageComp = "<div style='color:#003d73; margin-top:5px; font-weight:bold;'>Matches 12 vs 13 year old growth!</div>";
+        }
+
+        analogyContent.innerHTML = `
+            <div class="analogy-title">${difficulty}</div>
+            <div class="analogy-item">
+                <span class="analogy-icon">📏</span>
+                <span>${heightText} ${ageComp}</span>
+            </div>
+            <div class="analogy-item">
+                <span class="analogy-icon">🌍</span>
+                <span>${generalText}</span>
+            </div>
+        `;
+    }
+
+    // --- Simulation ---
+    function runSimulation() {
+        const N = parseInt(sliderSample.value);
+        const probLoaded = parseInt(sliderEffect.value) / 100;
+        
+        let successesA = 0;
+        let successesB = 0;
+
+        for(let i=0; i<N; i++) {
+            if(Math.random() < PROB_FAIR) successesA++;
+            if(Math.random() < probLoaded) successesB++;
+        }
+
+        const pctA = (successesA / N);
+        const pctB = (successesB / N);
+        
+        const p_pool = (successesA + successesB) / (2 * N);
+        const se = Math.sqrt(p_pool * (1 - p_pool) * (1/N + 1/N));
+        let z = 0;
+        let pValue = 1.0;
+        
+        if (se > 0) {
+            z = (pctB - pctA) / se;
+            pValue = 2 * (1 - jStat_normal_cdf(Math.abs(z))); 
+        }
+
+        resultsPanel.style.display = 'block';
+        pedNote.style.display = 'block';
+        
+        document.getElementById('resA-count').innerText = successesA;
+        document.getElementById('resA-pct').innerText = (pctA * 100).toFixed(1);
+        
+        document.getElementById('resB-count').innerText = successesB;
+        document.getElementById('resB-pct').innerText = (pctB * 100).toFixed(1);
+        document.getElementById('p-value-display').innerText = pValue.toFixed(4);
+
+        const conclusionBox = document.getElementById('conclusionBox');
+        const takeawayText = document.getElementById('takeawayText');
+        const pInterp = document.getElementById('p-interp');
+
+        if(pValue < 0.05) {
+            conclusionBox.className = "result-status status-sig";
+            conclusionBox.innerHTML = "✅ Significant Difference Found";
+            pInterp.innerText = "(Statistically Significant)";
+            takeawayText.innerHTML = `
+                <strong>Success!</strong> Your "microscope" was powerful enough to find the truth. The data suggests the dice are indeed different.
+            `;
+        } else {
+            conclusionBox.className = "result-status status-ns";
+            conclusionBox.innerHTML = "⚠️ No Significant Difference";
+            pInterp.innerText = " (Not Significant - any difference might just be random)";
+            takeawayText.innerHTML = `
+                <strong>We missed it.</strong> We failed to show that the dice are different.
+                <br>
+                <em>Try increasing the Sample Size (N) or increase the effect size (that is how much the dice are different)!</em>
+            `;
+        }
+
+        updateBarChart(pctA, pctB);
+    }
+
+    function updateBarChart(pctA, pctB) {
+        const ctx = document.getElementById('resultsChart').getContext('2d');
+        if(myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Die A (Fair)', 'Die B (Biased)'],
+                datasets: [{
+                    label: '% of Sixes',
+                    data: [(pctA*100).toFixed(1), (pctB*100).toFixed(1)],
+                    backgroundColor: ['rgba(54, 162, 235, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                    borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, suggestedMax: Math.max(25, (pctB*100)+5) }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // Stats Utils
+    function jStat_normal_cdf(z) {
+        var t = 1 / (1 + 0.2316419 * Math.abs(z));
+        var d = 0.3989423 * Math.exp(-z * z / 2);
+        var p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+        if (z > 0) { return 1 - p; } else { return p; }
+    }
+</script>
+
+</body>
+</html>
