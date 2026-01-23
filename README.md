@@ -23,5 +23,9 @@ This tool visualizes how "controlling for a variable" works visually. It demonst
 This simulation challenges you to find a "hidden effect." It demonstrates that finding a significant result depends heavily on having a powerful enough "microscope" (Sample Size) relative to the size of the effect you are looking for.
 👉 **[Click here to run the Effect Size Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/effect_sample_size.html)**
 
+### 6. Closed vs. Open Approach
+This tool illustrates the distinction between the 'Closed' (Deductive) and 'Open' (Inductive) approach. It compares making a specific bet beforehand versus looking for noteworthy patterns in the data after the fact.
+👉 **[Click here to run the Closed vs. Open Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/open_closed_approach.html)**
+
 ---
 *Built by Carsten Bergenholtz and Gemini.*
