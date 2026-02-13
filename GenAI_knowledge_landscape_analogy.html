@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Knowledge points & extrapolation risk (with analogy)</title>
+  <style>
+    :root {
+      --fg: #111;
+      --muted: #555;
+      --border: #ddd;
+      --panel: #f7f7f7;
+      --accent: #0b57d0;
+      --warn: #b85c00;
+      --bad: #b00020;
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      margin: 22px;
+      color: var(--fg);
+      line-height: 1.35;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 10px 0;
+      font-weight: 650;
+    }
+    .sub {
+      max-width: 980px;
+      color: var(--muted);
+      margin: 0 0 16px 0;
+    }
+    .wrap {
+      display: grid;
+      grid-template-columns: minmax(280px, 760px) 320px;
+      gap: 14px;
+      align-items: start;
+      max-width: 1100px;
+    }
+    @media (max-width: 980px) {
+      .wrap { grid-template-columns: 1fr; }
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .card-h {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .card-b { padding: 10px 12px; background: #fff; }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fff;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button:hover { border-color: #bdbdbd; }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: var(--panel);
+    }
+    .panel h2 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      row-gap: 6px;
+      column-gap: 10px;
+      font-size: 13px;
+      margin: 8px 0 10px 0;
+    }
+    .k { color: var(--muted); }
+
+    .bar {
+      height: 10px;
+      background: #e8e8e8;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #e0e0e0;
+      margin: 6px 0 0 0;
+    }
+    .bar > div {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 80ms linear;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 6px 10px;
+      align-items: center;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .swatch {
+      width: 18px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid rgba(0,0,0,0.18);
+    }
+
+    .list {
+      font-size: 13px;
+      margin: 6px 0 0 0;
+      padding: 0 0 0 16px;
+      color: var(--muted);
+    }
+    .list li { margin: 4px 0; }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      background: #fff;
+    }
+
+    /* --- Example / analogy section --- */
+    .full {
+      max-width: 1100px;
+      margin-top: 14px;
+    }
+    .exgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+      margin-top: 10px;
+    }
+    @media (max-width: 980px) {
+      .exgrid { grid-template-columns: 1fr; }
+    }
+    .box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+    }
+    .box h3 {
+      margin: 0 0 6px 0;
+      font-size: 13px;
+      font-weight: 650;
+      color: var(--fg);
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      line-height: 1.35;
+      margin: 0;
+    }
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      padding: 1px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .tag.good { border-color: rgba(46,204,113,0.6); }
+    .tag.risky { border-color: rgba(231,76,60,0.6); }
+
+    mark.bad {
+      background: rgba(231,76,60,0.18);
+      border-bottom: 1px dashed rgba(231,76,60,0.8);
+      padding: 0 2px;
+    }
+    mark.warn {
+      background: rgba(241,196,15,0.22);
+      border-bottom: 1px dashed rgba(184,92,0,0.8);
+      padding: 0 2px;
+    }
+
+    .rowbtns {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Knowledge points and extrapolation risk</h1>
+  <p class="sub">
+    Teaching intuition: imagine the model’s competence as <em>patchy</em> across a “task landscape”. It has strong anchors in some regions (knowledge points).
+    Between anchors it fills in by leaning on whatever nearby information it has.
+    The farther you are from any anchor, the less constrained the output becomes—so the risk of confident nonsense goes up.
+  </p>
+
+  <div class="wrap">
+
+    <div class="card">
+      <div class="card-h">
+        <div>
+          <span class="pill">Try it</span> Move your mouse over the map. (Click to “pin” a question location.)
+        </div>
+        <div class="controls">
+          <button id="regenBtn" title="Generate a new set of knowledge points">New random map</button>
+          <button id="toggleLinesBtn" title="Show / hide how the model leans on nearby points">Toggle nearest-points lines</button>
+        </div>
+      </div>
+      <div class="card-b">
+        <canvas id="map" width="900" height="520" aria-label="Knowledge landscape"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>What you’re seeing</h2>
+      <div class="legend">
+        <div class="swatch" style="background: rgb(46, 204, 113);"></div><div>High reliability (near knowledge)</div>
+        <div class="swatch" style="background: rgb(241, 196, 15);"></div><div>Medium reliability</div>
+        <div class="swatch" style="background: rgb(231, 76, 60);"></div><div>Low reliability (far from knowledge)</div>
+      </div>
+
+      <div class="kv" style="margin-top: 12px;">
+        <div class="k">Distance to nearest knowledge point</div><div id="distOut">—</div>
+        <div class="k">Estimated local reliability</div><div id="relOut">—</div>
+        <div class="k">Top-3 “nearby points” weights</div><div id="wOut">—</div>
+      </div>
+
+      <div>
+        <div class="k" style="font-size:13px;">Reliability meter</div>
+        <div class="bar"><div id="barFill"></div></div>
+      </div>
+
+      <div class="small">
+        Interpretation:
+        <ul class="list">
+          <li>The black dots are <strong>knowledge points</strong>: places where the model has strong “anchors”.</li>
+          <li>When you query somewhere else, it <strong>leans on nearby anchors</strong> (lines + weights) and fills in the rest.</li>
+          <li>Far away, it is mostly <strong>extrapolating</strong>, so failure risk rises.</li>
+        </ul>
+      </div>
+
+      <div class="small" style="margin-top: 10px;">
+        Note: this is a teaching toy. The key idea is “anchors” + “distance-based risk”.
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="card full">
+    <div class="card-h">
+      <div><span class="pill">Analogy + mini-case</span> Dense knowledge helps inference; near-misses trigger “creative guessing”</div>
+      <div class="controls">
+        <button id="exAnchoredBtn">Anchored concept</button>
+        <button id="exNearMissBtn">Near-miss term</button>
+        <button id="exCreativeBtn">Creative task</button>
+        <button id="exFreeBtn" title="Unpin and go back to free exploration">Free exploration</button>
+      </div>
+    </div>
+    <div class="card-b">
+      <div style="max-width: 980px; color: var(--muted); font-size: 13px;">
+        Think of the model as having many "worked examples" (patterns) across a big semantic space.
+        When you ask about a <em>standard</em> concept (lots of nearby examples), it can usually <em>interpolate</em> a sensible answer.
+        If you change a word slightly into something <em>plausible-sounding but non-standard</em>, you may step into a gap: the model still writes fluently, but it is now <em>extrapolating</em> and may invent.
+        That same inventiveness can be <em>useful</em> when you <em>ask</em> for creativity (Mollick’s point), and <em>misleading</em> when you implicitly ask for facts.
+      </div>
+
+      <div class="exgrid">
+        <div class="box">
+          <h3>Prompt</h3>
+          <p id="exPrompt" class="mono">Click one of the three buttons above.</p>
+          <div class="hint" id="exWhy">This box explains what changed (in the prompt) and why that matters.</div>
+        </div>
+
+        <div class="box">
+          <h3>What the output can look like <span id="exTag" class="tag">—</span></h3>
+          <p id="exOutput" class="mono">The output box will update when you pick an example.</p>
+          <div class="hint" id="exFoot">(In the near-miss case, highlighted parts are intentionally <em>made-up</em> to illustrate “confident guessing”.)</div>
+        </div>
+      </div>
+
+      <div class="note">
+        Practical rule of thumb:
+        if you want <em>truth</em> (definitions, numbers, quotes, references), treat <em>fluency</em> as cheap and <em>verification</em> as essential.
+        If you want <em>novelty</em> (metaphors, brainstorms, alternative framings), the model’s “unconstrained” mode can be a feature.
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('map');
+  const ctx = canvas.getContext('2d');
+
+  const distOut = document.getElementById('distOut');
+  const relOut  = document.getElementById('relOut');
+  const wOut    = document.getElementById('wOut');
+  const barFill = document.getElementById('barFill');
+
+  const regenBtn = document.getElementById('regenBtn');
+  const toggleLinesBtn = document.getElementById('toggleLinesBtn');
+
+  const exAnchoredBtn = document.getElementById('exAnchoredBtn');
+  const exNearMissBtn = document.getElementById('exNearMissBtn');
+  const exCreativeBtn = document.getElementById('exCreativeBtn');
+  const exFreeBtn = document.getElementById('exFreeBtn');
+
+  const exPrompt = document.getElementById('exPrompt');
+  const exWhy = document.getElementById('exWhy');
+  const exOutput = document.getElementById('exOutput');
+  const exTag = document.getElementById('exTag');
+  const exFoot = document.getElementById('exFoot');
+
+  // ----- Model knobs (kept simple) -----
+  const N_POINTS = 18;          // number of knowledge points on the map
+  const K_NEAREST = 3;          // how many points the model “leans on” (for illustration)
+  const SIGMA = 0.16;           // how quickly reliability decays with distance (in map-units)
+
+  // Precompute a background heatmap at lower resolution for speed.
+  const HEAT_W = 320;
+  const HEAT_H = 185;
+
+  let points = [];
+  let showLines = true;
+  let pinned = null;            // pinned query in map coords {x,y}
+
+  // Example locations are chosen *from the current map* so they remain valid after "New random map".
+  let exampleDense = null;
+  let exampleSparse = null;
+
+  function rand() { return Math.random(); }
+  function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+  function generatePoints() {
+    points = [];
+    for (let i = 0; i < N_POINTS; i++) {
+      // Avoid extreme edges for nicer visuals.
+      const x = 0.06 + 0.88 * rand();
+      const y = 0.06 + 0.88 * rand();
+      points.push({x, y});
+    }
+    computeExampleLocations();
+  }
+
+  function dist(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+
+  // Reliability is high near a point, decays with distance.
+  function reliabilityFromNearestDistance(d) {
+    // Gaussian-ish decay: 1 at d=0; approaches 0 as d grows.
+    return Math.exp(-(d*d) / (2 * SIGMA * SIGMA));
+  }
+
+  // Find nearest points and weights for a query location q.
+  function nearestK(q, k) {
+    const arr = points.map((p, idx) => ({p, idx, d: dist(q, p)}));
+    arr.sort((a,b) => a.d - b.d);
+    return arr.slice(0, k);
+  }
+
+  // Similarity weights for illustration.
+  function weightsFromDistances(nearestArr) {
+    const raw = nearestArr.map(o => Math.exp(-(o.d*o.d) / (2 * SIGMA * SIGMA)));
+    const s = raw.reduce((a,b) => a + b, 0) || 1;
+    return raw.map(v => v / s);
+  }
+
+  function toCanvas(pt) {
+    return {
+      x: pt.x * canvas.width,
+      y: pt.y * canvas.height,
+    };
+  }
+
+  function fromCanvas(x, y) {
+    return {
+      x: clamp01(x / canvas.width),
+      y: clamp01(y / canvas.height),
+    };
+  }
+
+  // Render background heatmap: reliability based on distance to nearest point.
+  function drawHeatmap() {
+    const img = ctx.createImageData(HEAT_W, HEAT_H);
+    for (let j = 0; j < HEAT_H; j++) {
+      for (let i = 0; i < HEAT_W; i++) {
+        const x = (i + 0.5) / HEAT_W;
+        const y = (j + 0.5) / HEAT_H;
+
+        // nearest distance
+        let dmin = Infinity;
+        for (const p of points) {
+          const dx = x - p.x;
+          const dy = y - p.y;
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d < dmin) dmin = d;
+        }
+        const r = reliabilityFromNearestDistance(dmin);
+
+        // get color
+        const col = (r < 0.5)
+          ? lerpColor([231,76,60], [241,196,15], r/0.5)
+          : lerpColor([241,196,15], [46,204,113], (r-0.5)/0.5);
+
+        const idx = (j * HEAT_W + i) * 4;
+        img.data[idx+0] = col[0];
+        img.data[idx+1] = col[1];
+        img.data[idx+2] = col[2];
+        img.data[idx+3] = 255;
+      }
+    }
+
+    // Draw scaled up to canvas.
+    const off = document.createElement('canvas');
+    off.width = HEAT_W;
+    off.height = HEAT_H;
+    off.getContext('2d').putImageData(img, 0, 0);
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+
+    // Add a subtle white veil to soften the palette.
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function lerpColor(a, b, t) {
+    const tt = Math.max(0, Math.min(1, t));
+    return [
+      Math.round(a[0] + (b[0] - a[0]) * tt),
+      Math.round(a[1] + (b[1] - a[1]) * tt),
+      Math.round(a[2] + (b[2] - a[2]) * tt),
+    ];
+  }
+
+  function drawPoints() {
+    for (const p of points) {
+      const c = toCanvas(p);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 6.2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.9)';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+      ctx.stroke();
+    }
+  }
+
+  function drawQuery(q) {
+    if (!q) return;
+
+    const nearestArr = nearestK(q, K_NEAREST);
+    const w = weightsFromDistances(nearestArr);
+
+    // Lines to nearest points
+    if (showLines) {
+      const qc = toCanvas(q);
+      ctx.lineWidth = 2;
+      for (let i = 0; i < nearestArr.length; i++) {
+        const pc = toCanvas(nearestArr[i].p);
+        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = `rgba(0,0,0,${0.55 * w[i] + 0.15})`;
+        ctx.beginPath();
+        ctx.moveTo(qc.x, qc.y);
+        ctx.lineTo(pc.x, pc.y);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+
+    // Highlight the nearest point
+    const p0 = nearestArr[0].p;
+    const c0 = toCanvas(p0);
+    ctx.beginPath();
+    ctx.arc(c0.x, c0.y, 10.5, 0, Math.PI * 2);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+    ctx.stroke();
+
+    // Query marker
+    const qc = toCanvas(q);
+    ctx.beginPath();
+    ctx.arc(qc.x, qc.y, 6.8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.stroke();
+
+    // Update panel numbers
+    const dNearest = nearestArr[0].d;
+    const rLocal = reliabilityFromNearestDistance(dNearest);
+
+    distOut.textContent = dNearest.toFixed(3);
+    relOut.textContent = `${Math.round(rLocal * 100)}% (${bucket(rLocal)})`;
+    barFill.style.width = `${Math.round(rLocal * 100)}%`;
+
+    const wText = w.map((v,i) => `${Math.round(v*100)}%`).join(', ');
+    wOut.textContent = wText;
+  }
+
+  function bucket(r) {
+    if (r >= 0.70) return 'high';
+    if (r >= 0.35) return 'medium';
+    return 'low';
+  }
+
+  function render(q) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawHeatmap();
+    drawPoints();
+    drawQuery(q);
+
+    // If pinned, show an extra ring so students see what is pinned.
+    if (pinned) {
+      const pc = toCanvas(pinned);
+      ctx.beginPath();
+      ctx.arc(pc.x, pc.y, 13.5, 0, Math.PI * 2);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(11,87,208,0.9)';
+      ctx.stroke();
+    }
+  }
+
+  // --- Choose example locations based on the current map ---
+  function nearestDistance(q) {
+    let dmin = Infinity;
+    for (const p of points) {
+      const dx = q.x - p.x;
+      const dy = q.y - p.y;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if (d < dmin) dmin = d;
+    }
+    return dmin;
+  }
+
+  function computeExampleLocations() {
+    // Dense example = area with the smallest sum of 3 nearest distances (approx: "many nearby anchors")
+    let bestDense = null;
+    let bestDenseScore = Infinity;
+
+    // Sparse example = area with the largest nearest distance (approx: "far from anchors")
+    let bestSparse = null;
+    let bestSparseScore = -Infinity;
+
+    const C = 1500;
+    for (let i = 0; i < C; i++) {
+      const q = { x: 0.06 + 0.88 * rand(), y: 0.06 + 0.88 * rand() };
+      const n3 = nearestK(q, 3);
+      const denseScore = n3[0].d + n3[1].d + n3[2].d;
+      if (denseScore < bestDenseScore) {
+        bestDenseScore = denseScore;
+        bestDense = q;
+      }
+      const sparseScore = n3[0].d;
+      if (sparseScore > bestSparseScore) {
+        bestSparseScore = sparseScore;
+        bestSparse = q;
+      }
+    }
+
+    exampleDense = bestDense;
+    exampleSparse = bestSparse;
+  }
+
+  // --- Example text UI ---
+  function setExample(kind) {
+    if (kind === 'anchored') {
+      pinned = exampleDense;
+      render(pinned);
+
+      exTag.textContent = 'anchored';
+      exTag.className = 'tag good';
+
+      exPrompt.textContent =
+`In one paragraph:
+
+What is “omitted variable bias”? Give a simple example.`;
+
+      exWhy.textContent =
+"This is a standard term in research methods. There are many nearby patterns (anchors) to lean on, so the model can usually interpolate a stable explanation.";
+
+      exOutput.innerHTML =
+`Omitted variable bias happens when you estimate a relationship between X and Y but leave out a third variable that affects both. The missing variable partly gets \"lumped into\" X, so your estimate of X → Y becomes distorted.
+
+Example: if you find that exercise is correlated with job satisfaction, a factor like stress or overall health could influence both. If you omit that factor, you may wrongly attribute the shared influence to exercise.`;
+
+      exFoot.textContent =
+"In anchored regions, answers tend to be boring-but-solid.";
+
+      return;
+    }
+
+    if (kind === 'nearmiss') {
+      pinned = exampleSparse;
+      render(pinned);
+
+      exTag.textContent = 'near-miss';
+      exTag.className = 'tag risky';
+
+      exPrompt.textContent =
+`Almost the same prompt (one word changed):
+
+What is “emitted variable bias”? Give a simple example.`;
+
+      exWhy.textContent =
+"This sounds like it should be real, and it’s very close to a real term (“omitted variable bias”). If there’s no strong anchor for the near-miss phrase, the model may improvise a definition by analogy.";
+
+      exOutput.innerHTML =
+`Possible output (hallucination risk):
+
+<mark class=\"bad\">Emitted variable bias is when a variable is \"emitted\" from the data during collection or preprocessing, which systematically biases your estimates.</mark>
+
+<mark class=\"bad\">Example: if stress is frequently not recorded, the remaining variables can look like they \"cause\" mood changes.</mark>
+
+Safer output would be:
+“I don’t recognize \"emitted variable bias\" as a standard term. Did you mean \"omitted variable bias\"?”`;
+
+      exFoot.textContent =
+"The highlighted parts are intentionally made-up to illustrate the failure mode: fluent text + invented specifics.";
+
+      return;
+    }
+
+    if (kind === 'creative') {
+      pinned = exampleSparse;
+      render(pinned);
+
+      exTag.textContent = 'creative';
+      exTag.className = 'tag good';
+
+      exPrompt.textContent =
+`Same topic, but now creativity is the goal:
+
+Invent a metaphor to help students remember omitted variable bias.`;
+
+      exWhy.textContent =
+"Here we are not asking for a hidden fact. We are asking for a useful new framing. This is where LLMs can be strong as idea generators (Mollick’s point).";
+
+      exOutput.innerHTML =
+`Metaphor: Imagine you’re judging whether “coffee makes students perform better” by comparing coffee cups and exam scores.
+
+If you don’t measure <em>sleep</em>, you might conclude coffee is the driver. But sleep affects both: tired students drink more coffee and also score lower.
+
+Sleep is the omitted variable. Leaving it out makes the story you tell about coffee → performance look stronger (or even reversed) than it really is.`;
+
+      exFoot.textContent =
+"In creative tasks, ‘unconstrained’ generation can be a feature—as long as you label it as brainstorming, not truth.";
+
+      return;
+    }
+  }
+
+  function clearExample() {
+    pinned = null;
+    render(null);
+
+    exTag.textContent = '—';
+    exTag.className = 'tag';
+
+    exPrompt.textContent = 'Click one of the three buttons above.';
+    exWhy.textContent = 'This box explains what changed (in the prompt) and why that matters.';
+    exOutput.textContent = 'The output box will update when you pick an example.';
+    exFoot.textContent = '(In the near-miss case, highlighted parts are intentionally made-up to illustrate “confident guessing”.)';
+
+    // Also reset the right panel values.
+    distOut.textContent = '—';
+    relOut.textContent = '—';
+    wOut.textContent = '—';
+    barFill.style.width = '0%';
+  }
+
+  // Interaction
+  function getMousePos(evt) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (evt.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (evt.clientY - rect.top) * (canvas.height / rect.height);
+    return {x, y};
+  }
+
+  canvas.addEventListener('mousemove', (evt) => {
+    if (pinned) return; // while pinned, keep stable unless user unpins
+    const m = getMousePos(evt);
+    const q = fromCanvas(m.x, m.y);
+    render(q);
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    if (pinned) return;
+    distOut.textContent = '—';
+    relOut.textContent = '—';
+    wOut.textContent = '—';
+    barFill.style.width = '0%';
+    render(null);
+  });
+
+  canvas.addEventListener('click', (evt) => {
+    // Keep existing click-to-pin behavior.
+    if (pinned) {
+      pinned = null;
+      render(null);
+      return;
+    }
+    const m = getMousePos(evt);
+    pinned = fromCanvas(m.x, m.y);
+    render(pinned);
+  });
+
+  regenBtn.addEventListener('click', () => {
+    clearExample();
+    generatePoints();
+    render(null);
+  });
+
+  toggleLinesBtn.addEventListener('click', () => {
+    showLines = !showLines;
+    render(pinned);
+  });
+
+  exAnchoredBtn.addEventListener('click', () => setExample('anchored'));
+  exNearMissBtn.addEventListener('click', () => setExample('nearmiss'));
+  exCreativeBtn.addEventListener('click', () => setExample('creative'));
+  exFreeBtn.addEventListener('click', () => clearExample());
+
+  // Init
+  generatePoints();
+  render(null);
+})();
+</script>
+</body>
+</html>
