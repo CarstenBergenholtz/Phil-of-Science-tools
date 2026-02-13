@@ -27,5 +27,9 @@ This simulation challenges you to find a "hidden effect." It demonstrates that f
 This tool illustrates the distinction between the 'Closed' (Deductive) and 'Open' (Inductive) approach. It compares making a specific bet beforehand versus looking for noteworthy patterns in the data after the fact.
 👉 **[Click here to run the Closed vs. Open Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/open_closed_approach.html)**
 
+### 7. GenAI Knowledge Landscape Analogy
+This tool visualizes the "knowledge landscape" analogy to explore how Generative AI navigates, connects, and structures information.
+👉 **[Click here to run the GenAI Landscape Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/GenAI_knowledge_landscape_analogy.html)**
+
 ---
 *Built by Carsten Bergenholtz and Gemini.*
