@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stroop Demo (Mouse/Touch)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#111827;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --good:#10b981;
+      --bad:#ef4444;
+      --btn:#1f2937;
+      --btnBorder:#374151;
+      --focus:#60a5fa;
+    }
+    html,body{height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--text);}
+    .wrap{max-width:980px; margin:0 auto; padding:24px;}
+    h1{font-size:22px; margin:0 0 6px 0;}
+    p{margin:8px 0; line-height:1.4;}
+    .card{
+      background:var(--panel);
+      border:1px solid #1f2937;
+      border-radius:14px;
+      padding:18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .row{display:flex; gap:14px; flex-wrap:wrap; align-items:stretch;}
+    .row > *{flex: 1 1 280px;}
+    .muted{color:var(--muted);}
+    .btn{
+      background:var(--btn);
+      border:1px solid var(--btnBorder);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:15px;
+    }
+    .btn:hover{border-color:#4b5563;}
+    .btn:focus{outline:2px solid var(--focus); outline-offset:2px;}
+    .btnPrimary{background:#2563eb; border-color:#1d4ed8;}
+    .btnPrimary:hover{border-color:#1e40af;}
+    .btnDanger{background:#7f1d1d; border-color:#991b1b;}
+    .btnDanger:hover{border-color:#b91c1c;}
+    .center{display:flex; justify-content:center; align-items:center;}
+    .bigStimulus{
+      font-size:64px;
+      font-weight:800;
+      letter-spacing:2px;
+      text-align:center;
+      margin:26px 0 8px 0;
+      user-select:none;
+    }
+    .subline{font-size:14px; text-align:center; color:var(--muted); margin-bottom:14px;}
+    .choiceGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+      gap:12px;
+      margin-top:14px;
+    }
+    .choiceBtn{
+      border:2px solid transparent;
+      border-radius:16px;
+      padding:14px 12px;
+      cursor:pointer;
+      font-size:18px;
+      font-weight:700;
+      min-height:72px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      user-select:none;
+    }
+    .choiceBtn:focus{outline:2px solid var(--focus); outline-offset:3px;}
+    .choiceBtn .swatch{
+      width:28px; height:28px; border-radius:10px;
+      border:2px solid rgba(255,255,255,.18);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.2);
+    }
+    .choiceBtn .label{display:flex; gap:10px; align-items:center;}
+    .kbdHint{
+      font-size:12px;
+      padding:3px 8px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.18);
+      color:rgba(255,255,255,.72);
+      background: rgba(0,0,0,.25);
+    }
+    .feedback{
+      text-align:center;
+      font-weight:700;
+      margin-top:12px;
+      min-height:24px;
+    }
+    .feedback.good{color:var(--good);}
+    .feedback.bad{color:var(--bad);}
+    .progress{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      font-size:13px;
+      color:var(--muted);
+      margin-top:12px;
+    }
+    .bar{
+      height:10px;
+      background:#0f172a;
+      border:1px solid #1f2937;
+      border-radius:999px;
+      overflow:hidden;
+      flex: 1 1 auto;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background:#22c55e;
+    }
+    table{width:100%; border-collapse: collapse; margin-top:14px; font-size:13px;}
+    th, td{border-bottom:1px solid #1f2937; padding:8px 6px; text-align:left;}
+    th{color:#cbd5e1; font-weight:700;}
+    .pill{display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid #374151; color:#cbd5e1;}
+    .pill.easy{border-color:#14532d; color:#86efac;}
+    .pill.hard{border-color:#7c2d12; color:#fdba74;}
+    .twoCols{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    @media (max-width: 700px){
+      .bigStimulus{font-size:52px;}
+      .twoCols{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="screenIntro">
+      <h1>Stroop demo (mouse/touch responses)</h1>
+      <p class="muted">Respond to the <b>ink colour</b>, not the word meaning. This version uses clickable buttons (works well on touch screens too). Reaction times will vary across devices.</p>
+      <div class="row">
+        <div class="card" style="background:#0b1220; border-color:#1f2937;">
+          <p><b>Structure</b></p>
+          <ul style="margin:8px 0 0 18px; color:var(--muted);">
+            <li>8 easy (congruent) trials</li>
+            <li>8 hard (incongruent) trials</li>
+            <li>Mid-way summary after trial 8</li>
+          </ul>
+        </div>
+        <div class="card" style="background:#0b1220; border-color:#1f2937;">
+          <p><b>How to respond</b></p>
+          <p class="muted" style="margin-top:8px;">Click the button matching the ink colour.</p>
+          <p class="muted">Keyboard fallback is also enabled: <b>R</b>, <b>G</b>, <b>B</b>, <b>Y</b>.</p>
+        </div>
+      </div>
+      <p style="margin-top:14px;">
+        <button class="btn btnPrimary" id="btnStart">Start</button>
+        <button class="btn" id="btnDemo">Show a 3‑trial demo</button>
+      </p>
+      <p class="muted" style="font-size:13px;">Tip: For lecture use, you can mirror your screen and ask the class which button they’d click.</p>
+    </div>
+
+    <div class="card" id="screenTask" style="display:none;">
+      <div class="progress">
+        <span id="blockLabel" class="pill easy">Easy block</span>
+        <span>Trial <span id="trialN">1</span>/16</span>
+      </div>
+      <div class="bar" aria-hidden="true"><div id="barFill"></div></div>
+
+      <div class="bigStimulus" id="stimulus">RED</div>
+      <div class="subline" id="subline">Click the ink colour below</div>
+
+      <div class="choiceGrid" id="choiceGrid" aria-label="Colour choices"></div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <p class="muted" style="font-size:12px; margin-top:12px;">
+        Timing note: mouse/touch introduces extra motor + device latency compared to keypresses; for teaching this is fine, but it’s not “lab-grade” timing.
+      </p>
+
+      <p style="margin-top:12px;">
+        <button class="btn btnDanger" id="btnAbort">Abort / restart</button>
+      </p>
+    </div>
+
+    <div class="card" id="screenMid" style="display:none;">
+      <h1>Mid-way summary (after easy block)</h1>
+      <div class="twoCols">
+        <div class="card" style="background:#0b1220; border-color:#1f2937;">
+          <p><b>Easy block accuracy</b></p>
+          <p style="font-size:24px; margin:6px 0 0 0;"><span id="midAcc">–</span>%</p>
+        </div>
+        <div class="card" style="background:#0b1220; border-color:#1f2937;">
+          <p><b>Easy block average RT</b></p>
+          <p style="font-size:24px; margin:6px 0 0 0;"><span id="midRt">–</span> ms</p>
+        </div>
+      </div>
+      <p class="muted">Next you’ll get 8 incongruent trials (hard block): the word meaning and ink colour don’t match.</p>
+      <p style="margin-top:14px;">
+        <button class="btn btnPrimary" id="btnContinue">Continue to hard block</button>
+        <button class="btn" id="btnRestartFromMid">Restart from beginning</button>
+      </p>
+    </div>
+
+    <div class="card" id="screenDone" style="display:none;">
+      <h1>Results</h1>
+      <div class="row">
+        <div class="card" style="background:#0b1220; border-color:#1f2937;">
+          <p><b>Accuracy</b></p>
+          <p style="font-size:22px; margin:6px 0 0 0;"><span id="accAll">–</span>%</p>
+          <p class="muted" style="margin-top:6px;">(all 16 trials)</p>
+        </div>
+        <div class="card" style="background:#0b1220; border-color:#1f2937;">
+          <p><b>Avg RT (easy)</b></p>
+          <p style="font-size:22px; margin:6px 0 0 0;"><span id="rtEasy">–</span> ms</p>
+        </div>
+        <div class="card" style="background:#0b1220; border-color:#1f2937;">
+          <p><b>Avg RT (hard)</b></p>
+          <p style="font-size:22px; margin:6px 0 0 0;"><span id="rtHard">–</span> ms</p>
+        </div>
+        <div class="card" style="background:#0b1220; border-color:#1f2937;">
+          <p><b>Stroop effect</b></p>
+          <p style="font-size:22px; margin:6px 0 0 0;"><span id="stroopEff">–</span> ms</p>
+          <p class="muted" style="margin-top:6px;">(hard − easy)</p>
+        </div>
+      </div>
+
+      <p style="margin-top:12px;">
+        <button class="btn btnPrimary" id="btnRestart">Run again</button>
+        <button class="btn" id="btnCSV">Download CSV</button>
+      </p>
+
+      <div id="tableWrap"></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // --- Configuration ---
+  const N_EASY = 8;
+  const N_HARD = 8;
+  const TIMEOUT_MS = 6500;   // per trial
+  const FEEDBACK_MS = 450;   // brief feedback before next trial
+
+  // Keep colours obvious on projectors.
+  const COLORS = [
+    {name: "Red",   css: "red",        key: "r"},
+    {name: "Green", css: "limegreen",  key: "g"},
+    {name: "Blue",  css: "dodgerblue", key: "b"},
+    {name: "Yellow",css: "gold",       key: "y"},
+  ];
+
+  // --- State ---
+  let trials = [];      // planned trials
+  let results = [];     // completed trials
+  let idx = 0;          // current trial index
+  let tStart = 0;       // stimulus onset time (performance.now)
+  let timeoutHandle = null;
+  let allowResponse = false;
+  let demoMode = false;
+
+  // --- DOM ---
+  const screenIntro = document.getElementById("screenIntro");
+  const screenTask  = document.getElementById("screenTask");
+  const screenMid   = document.getElementById("screenMid");
+  const screenDone  = document.getElementById("screenDone");
+
+  const btnStart = document.getElementById("btnStart");
+  const btnDemo  = document.getElementById("btnDemo");
+  const btnAbort = document.getElementById("btnAbort");
+
+  const blockLabel = document.getElementById("blockLabel");
+  const trialN = document.getElementById("trialN");
+  const barFill = document.getElementById("barFill");
+
+  const stimulus = document.getElementById("stimulus");
+  const feedback = document.getElementById("feedback");
+  const choiceGrid = document.getElementById("choiceGrid");
+
+  const midAcc = document.getElementById("midAcc");
+  const midRt  = document.getElementById("midRt");
+  const btnContinue = document.getElementById("btnContinue");
+  const btnRestartFromMid = document.getElementById("btnRestartFromMid");
+
+  const accAll = document.getElementById("accAll");
+  const rtEasy = document.getElementById("rtEasy");
+  const rtHard = document.getElementById("rtHard");
+  const stroopEff = document.getElementById("stroopEff");
+  const btnRestart = document.getElementById("btnRestart");
+  const btnCSV = document.getElementById("btnCSV");
+  const tableWrap = document.getElementById("tableWrap");
+
+  // --- Utilities ---
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+  function mean(nums){
+    const xs = nums.filter(x => Number.isFinite(x));
+    if(xs.length === 0) return NaN;
+    return xs.reduce((a,b)=>a+b,0)/xs.length;
+  }
+  function pct(n, d){
+    if(d === 0) return NaN;
+    return (100*n/d);
+  }
+  function fmtMs(x){
+    if(!Number.isFinite(x)) return "–";
+    return Math.round(x).toString();
+  }
+  function fmtPct(x){
+    if(!Number.isFinite(x)) return "–";
+    return Math.round(x).toString();
+  }
+  function setScreen(which){
+    screenIntro.style.display = (which==="intro") ? "" : "none";
+    screenTask.style.display  = (which==="task")  ? "" : "none";
+    screenMid.style.display   = (which==="mid")   ? "" : "none";
+    screenDone.style.display  = (which==="done")  ? "" : "none";
+  }
+
+  function buildTrials(){
+    // Easy: congruent. 2 repeats per color => 8.
+    const easy = [];
+    for(const c of COLORS){
+      easy.push({block:"easy", word:c.name.toUpperCase(), ink:c.name});
+      easy.push({block:"easy", word:c.name.toUpperCase(), ink:c.name});
+    }
+    shuffle(easy);
+
+    // Hard: incongruent. Sample 8 mismatches.
+    const allPairs = [];
+    for(const w of COLORS){
+      for(const ink of COLORS){
+        if(w.name !== ink.name){
+          allPairs.push({block:"hard", word:w.name.toUpperCase(), ink:ink.name});
+        }
+      }
+    }
+    shuffle(allPairs);
+    const hard = allPairs.slice(0, N_HARD);
+
+    return easy.concat(hard);
+  }
+
+  function renderChoices(){
+    // Create clickable buttons once.
+    choiceGrid.innerHTML = "";
+    for(const c of COLORS){
+      const btn = document.createElement("button");
+      btn.className = "choiceBtn";
+      btn.style.background = "rgba(255,255,255,0.06)";
+      btn.style.borderColor = "rgba(255,255,255,0.10)";
+      btn.setAttribute("data-choice", c.name);
+      btn.setAttribute("aria-label", c.name);
+
+      const left = document.createElement("div");
+      left.className = "label";
+      const sw = document.createElement("div");
+      sw.className = "swatch";
+      sw.style.background = c.css;
+      const txt = document.createElement("div");
+      txt.textContent = c.name;
+      left.appendChild(sw);
+      left.appendChild(txt);
+
+      const hint = document.createElement("div");
+      hint.className = "kbdHint";
+      hint.textContent = c.key.toUpperCase();
+
+      btn.appendChild(left);
+      btn.appendChild(hint);
+
+      btn.addEventListener("click", () => handleResponse(c.name));
+      choiceGrid.appendChild(btn);
+    }
+  }
+
+  function showTrial(){
+    clearTimeout(timeoutHandle);
+    feedback.textContent = "";
+    feedback.className = "feedback";
+
+    const tr = trials[idx];
+    const isEasy = tr.block === "easy";
+    blockLabel.textContent = isEasy ? "Easy block" : "Hard block";
+    blockLabel.className = "pill " + (isEasy ? "easy" : "hard");
+    trialN.textContent = (idx+1).toString();
+    barFill.style.width = (((idx)/trials.length)*100).toFixed(1) + "%";
+
+    // Render stimulus
+    stimulus.textContent = tr.word;
+    const inkObj = COLORS.find(c => c.name === tr.ink);
+    stimulus.style.color = inkObj ? inkObj.css : "white";
+
+    // Start timing
+    allowResponse = true;
+    tStart = performance.now();
+
+    timeoutHandle = setTimeout(() => {
+      if(!allowResponse) return;
+      allowResponse = false;
+      recordResult(null, null, true);
+      flashFeedback(false, true);
+      nextStep();
+    }, TIMEOUT_MS);
+  }
+
+  function flashFeedback(correct, timeout=false){
+    if(timeout){
+      feedback.textContent = "No response (timeout)";
+      feedback.className = "feedback bad";
+    } else if(correct){
+      feedback.textContent = "Correct";
+      feedback.className = "feedback good";
+    } else {
+      feedback.textContent = "Wrong";
+      feedback.className = "feedback bad";
+    }
+  }
+
+  function recordResult(chosenColor, rtMs, timeout=false){
+    const tr = trials[idx];
+    const correctColor = tr.ink;
+    const correct = (!timeout && chosenColor === correctColor);
+
+    results.push({
+      trial: idx+1,
+      block: tr.block,
+      word: tr.word,
+      ink: tr.ink,
+      correct_color: correctColor,
+      response_color: chosenColor ?? "",
+      correct: correct ? 1 : 0,
+      timeout: timeout ? 1 : 0,
+      rt_ms: (rtMs ?? NaN),
+      iso_time: new Date().toISOString()
+    });
+  }
+
+  function handleResponse(colorName){
+    if(!allowResponse) return;
+    allowResponse = false;
+    clearTimeout(timeoutHandle);
+
+    const rt = performance.now() - tStart;
+    const tr = trials[idx];
+    const correct = (colorName === tr.ink);
+    recordResult(colorName, rt, false);
+    flashFeedback(correct, false);
+
+    setTimeout(() => nextStep(), FEEDBACK_MS);
+  }
+
+  function nextStep(){
+    idx += 1;
+    barFill.style.width = (((idx)/trials.length)*100).toFixed(1) + "%";
+
+    // Mid screen after easy block (but not in demo mode)
+    if(!demoMode && idx === N_EASY){
+      showMid();
+      return;
+    }
+    if(idx >= trials.length){
+      finish();
+      return;
+    }
+    showTrial();
+  }
+
+  function showMid(){
+    setScreen("mid");
+
+    const easy = results.filter(r => r.block === "easy");
+    const acc = pct(easy.reduce((a,r)=>a+r.correct,0), easy.length);
+    const rt = mean(easy.filter(r => r.timeout===0).map(r => r.rt_ms));
+
+    midAcc.textContent = fmtPct(acc);
+    midRt.textContent  = fmtMs(rt);
+  }
+
+  function finish(){
+    setScreen("done");
+
+    const all = results;
+    const acc = pct(all.reduce((a,r)=>a+r.correct,0), all.length);
+    const easy = all.filter(r => r.block === "easy");
+    const hard = all.filter(r => r.block === "hard");
+
+    const rtE = mean(easy.filter(r => r.timeout===0).map(r => r.rt_ms));
+    const rtH = mean(hard.filter(r => r.timeout===0).map(r => r.rt_ms));
+    const eff = (Number.isFinite(rtE) && Number.isFinite(rtH)) ? (rtH - rtE) : NaN;
+
+    accAll.textContent = fmtPct(acc);
+    rtEasy.textContent = fmtMs(rtE);
+    rtHard.textContent = fmtMs(rtH);
+    stroopEff.textContent = fmtMs(eff);
+
+    renderTable();
+  }
+
+  function renderTable(){
+    const rows = results.map(r => {
+      const rt = Number.isFinite(r.rt_ms) ? Math.round(r.rt_ms) : "";
+      const block = r.block === "easy" ? "Easy" : "Hard";
+      const ok = r.timeout ? "timeout" : (r.correct ? "correct" : "wrong");
+      return `<tr>
+        <td>${r.trial}</td>
+        <td>${block}</td>
+        <td>${r.word}</td>
+        <td>${r.ink}</td>
+        <td>${r.response_color || ""}</td>
+        <td>${ok}</td>
+        <td>${rt}</td>
+      </tr>`;
+    }).join("");
+
+    tableWrap.innerHTML = `
+      <p class="muted" style="margin-top:10px;">Trial-by-trial log:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Block</th><th>Word</th><th>Ink</th><th>Response</th><th>Outcome</th><th>RT (ms)</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function toCSV(){
+    const cols = ["trial","block","word","ink","correct_color","response_color","correct","timeout","rt_ms","iso_time"];
+    const lines = [cols.join(",")];
+    for(const r of results){
+      const line = cols.map(c => {
+        const v = r[c];
+        if(v === null || v === undefined) return "";
+        const s = String(v);
+        // escape quotes/commas
+        if(s.includes(",") || s.includes("\"") || s.includes("\n")){
+          return "\"" + s.replaceAll("\"","\"\"") + "\"";
+        }
+        return s;
+      }).join(",");
+      lines.push(line);
+    }
+    return lines.join("\n");
+  }
+
+  function downloadCSV(){
+    const blob = new Blob([toCSV()], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "stroop_results.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function resetAll(){
+    clearTimeout(timeoutHandle);
+    trials = buildTrials();
+    results = [];
+    idx = 0;
+    allowResponse = false;
+    demoMode = false;
+
+    renderChoices();
+    setScreen("task");
+    showTrial();
+  }
+
+  function runDemo(){
+    clearTimeout(timeoutHandle);
+    // Make 3 quick trials: 1 easy, 2 hard
+    trials = [
+      {block:"easy", word:"RED", ink:"Red"},
+      {block:"hard", word:"GREEN", ink:"Red"},
+      {block:"hard", word:"BLUE", ink:"Yellow"},
+    ];
+    results = [];
+    idx = 0;
+    allowResponse = false;
+    demoMode = true;
+
+    renderChoices();
+    setScreen("task");
+    showTrial();
+  }
+
+  // --- Event wiring ---
+  btnStart.addEventListener("click", resetAll);
+  btnDemo.addEventListener("click", runDemo);
+
+  btnAbort.addEventListener("click", () => {
+    setScreen("intro");
+  });
+
+  btnContinue.addEventListener("click", () => {
+    setScreen("task");
+    showTrial();
+  });
+
+  btnRestartFromMid.addEventListener("click", () => {
+    setScreen("intro");
+  });
+
+  btnRestart.addEventListener("click", () => {
+    setScreen("intro");
+  });
+
+  btnCSV.addEventListener("click", downloadCSV);
+
+  // Keyboard fallback
+  document.addEventListener("keydown", (ev) => {
+    if(screenTask.style.display === "none") return;
+    const k = (ev.key || "").toLowerCase();
+    const c = COLORS.find(x => x.key === k);
+    if(c) handleResponse(c.name);
+  });
+
+})();
+</script>
+</body>
+</html>
