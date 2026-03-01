@@ -31,5 +31,9 @@ This tool illustrates the distinction between the 'Closed' (Deductive) and 'Open
 This tool visualizes the "knowledge landscape" analogy to explore how Generative AI navigates, connects, and structures information.
 👉 **[Click here to run the GenAI Landscape Simulator](https://carstenbergenholtz.github.io/Phil-of-Science-tools/GenAI_knowledge_landscape_analogy.html)**
 
+### 8. The Stroop Effect Demo
+This tool demonstrates the psychological phenomenon where it takes longer to name the color of a word when the word itself spells out a different color. It illustrates cognitive interference and processing speed.
+👉 **[Click here to run the Stroop Effect Demo](https://carstenbergenholtz.github.io/Phil-of-Science-tools/Stroop_effect_demo.html)**
+
 ---
 *Built by Carsten Bergenholtz and Gemini.*
